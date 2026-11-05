@@ -3,15 +3,10 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
  * Usuario extiende de Persona: toda cuenta de acceso pertenece a una
  * persona real, asi que reutiliza dni/nombres/apellidos/fechaNacimiento
  * /correo y solo agrega las credenciales de acceso al sistema.
- *
- * Alumno 1 - auth: esta clase, junto con RegistrarUsuario, resuelve
- * la funcionalidad "Registrar Usuario" del modulo de autenticacion.
  */
 public class Usuario extends Persona {
 
@@ -24,36 +19,26 @@ public class Usuario extends Persona {
     public Usuario() {
         super();
         this.idUsuario = 0;
-        this.nombreUsuario = "invitado";
-        this.contrasena = "temporal1";
-        this.preguntaSeguridad = "Sin pregunta";
-        this.respuestaSeguridad = "Sin respuesta";
+        this.nombreUsuario = "";
+        this.contrasena = "";
+        this.preguntaSeguridad = "";
+        this.respuestaSeguridad = "";
     }
 
     /**
      * Registra los datos personales (heredado de Persona) y luego
-     * las credenciales de acceso, con try-catch no aplica aqui porque
-     * son solo cadenas, pero se valida todo con do-while + regex.
+     * las credenciales de acceso.
      */
-    public void registrar(Scanner teclado) {
-        registrarDatosPersonales(teclado);
+    public void registrar() {
+        registrarDatosPersonales();
+
+        this.nombreUsuario = Consola.leerTexto("Nombre de usuario:");
 
         String entrada;
-        do {
-            System.out.print("Nombre de usuario: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("El nombre de usuario no puede estar vacio.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.nombreUsuario = entrada;
-
         String confirmacion;
         do {
-            System.out.print("Contrasena (min 8 caracteres, con letras y numeros): ");
-            entrada = teclado.nextLine();
-            System.out.print("Confirmar contrasena: ");
-            confirmacion = teclado.nextLine();
+            entrada = Consola.leerTexto("Contrasena (minimo 8 caracteres, con letras y numeros):");
+            confirmacion = Consola.leerTexto("Confirmar contrasena:");
             if (!ValidRegex.esContrasenaValida(entrada)) {
                 System.out.println("La contrasena debe tener al menos 8 caracteres, con letras y numeros.");
             } else if (!entrada.equals(confirmacion)) {
@@ -62,23 +47,20 @@ public class Usuario extends Persona {
         } while (!ValidRegex.esContrasenaValida(entrada) || !entrada.equals(confirmacion));
         this.contrasena = entrada;
 
-        System.out.print("Pregunta de seguridad: ");
-        this.preguntaSeguridad = teclado.nextLine();
-        System.out.print("Respuesta de seguridad: ");
-        this.respuestaSeguridad = teclado.nextLine();
+        // Se usan para recuperar la contrasena si el usuario la olvida.
+        this.preguntaSeguridad = Consola.leerTexto("Pregunta de seguridad (ej. Nombre de mi primera mascota):");
+        this.respuestaSeguridad = Consola.leerTexto("Respuesta de seguridad:");
     }
 
     public int getIdUsuario() { return idUsuario; }
     public String getNombreUsuario() { return nombreUsuario; }
-    public String getContrasena() { return contrasena; }
     public String getPreguntaSeguridad() { return preguntaSeguridad; }
-    public String getRespuestaSeguridad() { return respuestaSeguridad; }
 
     public void setIdUsuario(int idUsuario) { this.idUsuario = idUsuario; }
 
     public void setNombreUsuario(String nombreUsuario) {
         if (ValidRegex.esTextoValido(nombreUsuario)) {
-            this.nombreUsuario = nombreUsuario;
+            this.nombreUsuario = nombreUsuario.trim();
         }
     }
 
@@ -90,19 +72,29 @@ public class Usuario extends Persona {
 
     public void setPreguntaSeguridad(String preguntaSeguridad) {
         if (ValidRegex.esTextoValido(preguntaSeguridad)) {
-            this.preguntaSeguridad = preguntaSeguridad;
+            this.preguntaSeguridad = preguntaSeguridad.trim();
         }
     }
 
     public void setRespuestaSeguridad(String respuestaSeguridad) {
         if (ValidRegex.esTextoValido(respuestaSeguridad)) {
-            this.respuestaSeguridad = respuestaSeguridad;
+            this.respuestaSeguridad = respuestaSeguridad.trim();
         }
     }
 
     public boolean validarPorNombreUsuario(String nombreUsuario, String contrasena) {
         return this.nombreUsuario.equalsIgnoreCase(nombreUsuario)
                 && this.contrasena.equals(contrasena);
+    }
+
+    /**
+     * Compara la respuesta de seguridad sin distinguir mayusculas ni
+     * espacios al inicio/final. La contrasena y la respuesta no tienen
+     * getter publico: nadie fuera de esta clase puede leerlas
+     * (encapsulamiento), solo comprobarlas.
+     */
+    public boolean validarRespuestaSeguridad(String respuesta) {
+        return respuesta != null && respuestaSeguridad.equalsIgnoreCase(respuesta.trim());
     }
 
     @Override
@@ -112,8 +104,11 @@ public class Usuario extends Persona {
 
     @Override
     public boolean validar() {
-        return ValidRegex.esTextoValido(nombreUsuario)
-                && ValidRegex.esContrasenaValida(contrasena);
+        return super.validar()
+                && ValidRegex.esTextoValido(nombreUsuario)
+                && ValidRegex.esContrasenaValida(contrasena)
+                && ValidRegex.esTextoValido(preguntaSeguridad)
+                && ValidRegex.esTextoValido(respuestaSeguridad);
     }
 
     @Override

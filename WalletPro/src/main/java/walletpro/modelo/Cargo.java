@@ -3,8 +3,6 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
  * Representa el puesto que ocupa un Empleado dentro de su Empresa.
  * Un mismo cargo (ej. "Desarrollador") puede repetirse en varios
@@ -16,25 +14,13 @@ public class Cargo implements IValidable {
     private String descripcion;
 
     public Cargo() {
-        this.nombreCargo = "Sin cargo";
+        this.nombreCargo = "";
         this.descripcion = "Sin descripcion";
     }
 
-    public void registrar(Scanner teclado) {
-        String entrada;
-
-        do {
-            System.out.print("Nombre del cargo: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("El nombre del cargo no puede estar vacio.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.nombreCargo = entrada;
-
-        System.out.print("Descripcion: ");
-        entrada = teclado.nextLine();
-        this.descripcion = ValidRegex.esTextoValido(entrada) ? entrada : "Sin descripcion";
+    public void registrar() {
+        this.nombreCargo = Consola.leerTexto("Nombre del cargo:");
+        this.descripcion = Consola.leerTextoOpcional("Descripcion (opcional, Enter para omitir):", "Sin descripcion");
     }
 
     public String getNombreCargo() { return nombreCargo; }
@@ -42,19 +28,19 @@ public class Cargo implements IValidable {
 
     public void setNombreCargo(String nombreCargo) {
         if (ValidRegex.esTextoValido(nombreCargo)) {
-            this.nombreCargo = nombreCargo;
+            this.nombreCargo = nombreCargo.trim();
         }
     }
 
     public void setDescripcion(String descripcion) {
         if (ValidRegex.esTextoValido(descripcion)) {
-            this.descripcion = descripcion;
+            this.descripcion = descripcion.trim();
         }
     }
 
     @Override
     public boolean validar() {
-        return !nombreCargo.startsWith("Sin");
+        return ValidRegex.esTextoValido(nombreCargo);
     }
 
     @Override

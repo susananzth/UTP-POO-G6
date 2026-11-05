@@ -1,26 +1,21 @@
 package walletpro.servicio;
 
+import walletpro.datos.Repositorio;
 import walletpro.modelo.Usuario;
-import walletpro.util.ValidRegex;
 
 /**
  * Encapsula el inicio de sesion, separado de Usuario para que la
- * clase de datos no dependa de la logica de acceso. Sin constructor
- * con parametros: recibe el arreglo de usuarios directamente en el
- * metodo, no lo guarda como atributo.
+ * clase de datos no dependa de la logica de acceso.
  */
 public class Login {
+
+    public static final int MAXIMO_INTENTOS = 3;
 
     public Login() {
     }
 
-    public Usuario iniciarSesion(Usuario[] usuariosDB, int totalUsuarios,
-                                  String nombreUsuario, String contrasena) {
-        for (int i = 0; i < totalUsuarios; i++) {
-            if (usuariosDB[i].validarPorNombreUsuario(nombreUsuario, contrasena)) {
-                return usuariosDB[i];
-            }
-        }
-        return null;
+    /** Devuelve el usuario si las credenciales son correctas, o null si no. */
+    public Usuario iniciarSesion(Repositorio<Usuario> usuarios, String nombreUsuario, String contrasena) {
+        return usuarios.buscar(u -> u.validarPorNombreUsuario(nombreUsuario, contrasena));
     }
 }

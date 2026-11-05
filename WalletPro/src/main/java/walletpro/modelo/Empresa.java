@@ -3,8 +3,6 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
  * Representa a la empresa empleadora de un Empleado. Se mantiene
  * separada de Empleado porque una misma empresa puede dar empleo a
@@ -16,30 +14,13 @@ public class Empresa implements IValidable {
     private String razonSocial;
 
     public Empresa() {
-        this.ruc = "00000000000";
-        this.razonSocial = "Sin razon social";
+        this.ruc = "";
+        this.razonSocial = "";
     }
 
-    public void registrar(Scanner teclado) {
-        String entrada;
-
-        do {
-            System.out.print("RUC (11 digitos): ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esSoloDigitos(entrada, 11)) {
-                System.out.println("RUC invalido. Debe tener exactamente 11 digitos.");
-            }
-        } while (!ValidRegex.esSoloDigitos(entrada, 11));
-        this.ruc = entrada;
-
-        do {
-            System.out.print("Razon social: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("La razon social no puede estar vacia.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.razonSocial = entrada;
+    public void registrar() {
+        this.ruc = Consola.leerDigitos("RUC (11 digitos):", 11);
+        this.razonSocial = Consola.leerTexto("Razon social:");
     }
 
     public String getRuc() { return ruc; }
@@ -53,13 +34,13 @@ public class Empresa implements IValidable {
 
     public void setRazonSocial(String razonSocial) {
         if (ValidRegex.esTextoValido(razonSocial)) {
-            this.razonSocial = razonSocial;
+            this.razonSocial = razonSocial.trim();
         }
     }
 
     @Override
     public boolean validar() {
-        return ValidRegex.esSoloDigitos(ruc, 11) && !razonSocial.startsWith("Sin");
+        return ValidRegex.esSoloDigitos(ruc, 11) && ValidRegex.esTextoValido(razonSocial);
     }
 
     @Override

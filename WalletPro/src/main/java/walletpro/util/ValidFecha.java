@@ -1,5 +1,7 @@
 package walletpro.util;
 
+import java.time.LocalDate;
+
 /**
  * Clase utilitaria de validacion de fechas (formato dd-mm-aaaa).
  * No mantiene estado: solo metodos estaticos. Por eso las demas
@@ -22,9 +24,9 @@ public class ValidFecha {
                 return false;
             }
         }
-        int dia = Integer.parseInt(fecha.substring(0, 2));
-        int mes = Integer.parseInt(fecha.substring(3, 5));
-        int anio = Integer.parseInt(fecha.substring(6, 10));
+        int dia = obtenerDia(fecha);
+        int mes = obtenerMes(fecha);
+        int anio = obtenerAnio(fecha);
 
         if (anio < 1900 || anio > 2100) {
             return false;
@@ -56,6 +58,10 @@ public class ValidFecha {
         return (anio % 4 == 0 && anio % 100 != 0) || (anio % 400 == 0);
     }
 
+    public static int obtenerDia(String fecha) {
+        return Integer.parseInt(fecha.substring(0, 2));
+    }
+
     public static int obtenerMes(String fecha) {
         return Integer.parseInt(fecha.substring(3, 5));
     }
@@ -64,11 +70,23 @@ public class ValidFecha {
         return Integer.parseInt(fecha.substring(6, 10));
     }
 
-    /** Util para los reportes de Presupuesto: indica si una fecha cae en ese mes/anio. */
-    public static boolean obtenerMesAnio(String fecha, int mes, int anio) {
+    /** Indica si una fecha cae en ese mes/anio (se usa en presupuestos y reportes). */
+    public static boolean esDelMes(String fecha, int mes, int anio) {
         if (!validar(fecha)) {
             return false;
         }
         return obtenerMes(fecha) == mes && obtenerAnio(fecha) == anio;
+    }
+
+    /** Fecha de hoy en formato dd-mm-aaaa (se usa para fechar depositos y retiros). */
+    public static String hoy() {
+        LocalDate hoy = LocalDate.now();
+        return String.format("%02d-%02d-%04d", hoy.getDayOfMonth(), hoy.getMonthValue(), hoy.getYear());
+    }
+
+    /** Indica si la fecha es posterior a hoy. */
+    public static boolean esFutura(String fecha) {
+        LocalDate valor = LocalDate.of(obtenerAnio(fecha), obtenerMes(fecha), obtenerDia(fecha));
+        return valor.isAfter(LocalDate.now());
     }
 }

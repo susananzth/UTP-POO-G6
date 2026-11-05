@@ -3,8 +3,6 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
  * Clase abstracta que representa a toda persona del sistema.
  * Usuario y Empleado heredan de aqui porque ambos "son una" persona,
@@ -12,10 +10,8 @@ import java.util.Scanner;
  * acceso vs. datos laborales). No se instancia directamente.
  *
  * Siguiendo el estilo del curso: sin constructor con parametros,
- * registro interactivo con Scanner dentro de un do-while, validacion
- * con try-catch y expresiones regulares, y el Scanner se declara una
- * sola vez aqui (protected) para que las subclases lo hereden sin
- * volver a declararlo.
+ * registro interactivo por teclado (a traves de la clase Consola)
+ * y setters que validan antes de asignar.
  */
 public abstract class Persona implements IValidable, IConsultable {
 
@@ -26,11 +22,11 @@ public abstract class Persona implements IValidable, IConsultable {
     protected String correo;
 
     public Persona() {
-        this.dni = "00000000";
-        this.nombres = "Sin nombre";
-        this.apellidos = "Sin apellido";
-        this.fechaNacimiento = "01-01-1900";
-        this.correo = "sin@correo.com";
+        this.dni = "";
+        this.nombres = "";
+        this.apellidos = "";
+        this.fechaNacimiento = "";
+        this.correo = "";
     }
 
     /**
@@ -38,50 +34,17 @@ public abstract class Persona implements IValidable, IConsultable {
      * dentro de su propio registrar() antes de pedir sus campos
      * especificos (credenciales o datos laborales).
      */
-    protected void registrarDatosPersonales(Scanner teclado) {
+    protected void registrarDatosPersonales() {
+        this.dni = Consola.leerDigitos("DNI (8 digitos):", 8);
+        this.nombres = Consola.leerTexto("Nombres:");
+        this.apellidos = Consola.leerTexto("Apellidos:");
+        this.fechaNacimiento = Consola.leerFechaPasada("Fecha de nacimiento (dd-mm-aaaa):");
+
         String entrada;
-
         do {
-            System.out.print("DNI (8 digitos): ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esSoloDigitos(entrada, 8)) {
-                System.out.println("DNI invalido. Debe tener exactamente 8 digitos.");
-            }
-        } while (!ValidRegex.esSoloDigitos(entrada, 8));
-        this.dni = entrada;
-
-        do {
-            System.out.print("Nombres: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("Los nombres no pueden estar vacios.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.nombres = entrada;
-
-        do {
-            System.out.print("Apellidos: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("Los apellidos no pueden estar vacios.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.apellidos = entrada;
-
-        do {
-            System.out.print("Fecha de nacimiento (dd-mm-aaaa): ");
-            entrada = teclado.nextLine();
-            if (!ValidFecha.validar(entrada)) {
-                System.out.println("Fecha invalida. Use el formato dd-mm-aaaa.");
-            }
-        } while (!ValidFecha.validar(entrada));
-        this.fechaNacimiento = entrada;
-
-        do {
-            System.out.print("Correo: ");
-            entrada = teclado.nextLine();
+            entrada = Consola.leerTexto("Correo:");
             if (!ValidRegex.esCorreoValido(entrada)) {
-                System.out.println("Correo invalido.");
+                System.out.println("Correo invalido. Ejemplo: nombre@correo.com");
             }
         } while (!ValidRegex.esCorreoValido(entrada));
         this.correo = entrada;
@@ -101,18 +64,18 @@ public abstract class Persona implements IValidable, IConsultable {
 
     public void setNombres(String nombres) {
         if (ValidRegex.esTextoValido(nombres)) {
-            this.nombres = nombres;
+            this.nombres = nombres.trim();
         }
     }
 
     public void setApellidos(String apellidos) {
         if (ValidRegex.esTextoValido(apellidos)) {
-            this.apellidos = apellidos;
+            this.apellidos = apellidos.trim();
         }
     }
 
     public void setFechaNacimiento(String fechaNacimiento) {
-        if (ValidFecha.validar(fechaNacimiento)) {
+        if (ValidFecha.validar(fechaNacimiento) && !ValidFecha.esFutura(fechaNacimiento)) {
             this.fechaNacimiento = fechaNacimiento;
         }
     }
@@ -130,7 +93,8 @@ public abstract class Persona implements IValidable, IConsultable {
     @Override
     public boolean validar() {
         return ValidRegex.esSoloDigitos(dni, 8)
-                && !nombres.equals("Sin nombre")
+                && ValidRegex.esTextoValido(nombres)
+                && ValidRegex.esTextoValido(apellidos)
                 && ValidRegex.esCorreoValido(correo);
     }
 
@@ -149,6 +113,6 @@ public abstract class Persona implements IValidable, IConsultable {
 
     @Override
     public String toString() {
-        return "[" + getRol() + "] " + getNombreCompleto();
+        return getNombreCompleto() + " (DNI " + dni + ")";
     }
 }

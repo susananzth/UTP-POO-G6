@@ -3,10 +3,8 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
- * Clasifica un Prestamo (Personal, Hipotecario, etc.).
+ * Clasifica un Prestamo (Personal, Hipotecario, Vehicular, etc.).
  */
 public class TipoPrestamo implements IValidable {
 
@@ -14,25 +12,13 @@ public class TipoPrestamo implements IValidable {
     private String descripcion;
 
     public TipoPrestamo() {
-        this.nombre = "General";
+        this.nombre = "";
         this.descripcion = "Sin descripcion";
     }
 
-    public void registrar(Scanner teclado) {
-        String entrada;
-
-        do {
-            System.out.print("Nombre del tipo de prestamo: ");
-            entrada = teclado.nextLine();
-            if (!ValidRegex.esTextoValido(entrada)) {
-                System.out.println("El nombre no puede estar vacio.");
-            }
-        } while (!ValidRegex.esTextoValido(entrada));
-        this.nombre = entrada;
-
-        System.out.print("Descripcion: ");
-        entrada = teclado.nextLine();
-        this.descripcion = ValidRegex.esTextoValido(entrada) ? entrada : "Sin descripcion";
+    public void registrar() {
+        this.nombre = Consola.leerTexto("Nombre del tipo de prestamo:");
+        this.descripcion = Consola.leerTextoOpcional("Descripcion (opcional, Enter para omitir):", "Sin descripcion");
     }
 
     public String getNombre() { return nombre; }
@@ -40,19 +26,19 @@ public class TipoPrestamo implements IValidable {
 
     public void setNombre(String nombre) {
         if (ValidRegex.esTextoValido(nombre)) {
-            this.nombre = nombre;
+            this.nombre = nombre.trim();
         }
     }
 
     public void setDescripcion(String descripcion) {
         if (ValidRegex.esTextoValido(descripcion)) {
-            this.descripcion = descripcion;
+            this.descripcion = descripcion.trim();
         }
     }
 
     @Override
     public boolean validar() {
-        return !nombre.equals("General") || !descripcion.equals("Sin descripcion");
+        return ValidRegex.esTextoValido(nombre);
     }
 
     @Override

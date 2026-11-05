@@ -3,61 +3,51 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
  * Cada deposito, retiro o pago dentro de una CuentaBancaria. Hereda
  * de Transaccion; CuentaBancaria es duena de sus movimientos
  * (composicion): un movimiento no existe fuera de la cuenta donde
- * ocurrio. Se crea internamente (no por el usuario directamente),
- * por eso conserva un constructor de apoyo ademas del no-arg.
+ * ocurrio. Lo crea siempre la cuenta, nunca el usuario directamente.
  */
 public class Movimiento extends Transaccion {
 
+    public static final String DEPOSITO = "DEPOSITO";
+    public static final String RETIRO = "RETIRO";
+
     private String tipoMovimiento;
+    private double saldoResultante;
 
     public Movimiento() {
         super();
-        this.tipoMovimiento = "DEPOSITO";
+        this.tipoMovimiento = DEPOSITO;
+        this.saldoResultante = 0;
     }
 
-    public void registrar(Scanner teclado, String idTransaccion, String tipoMovimiento) {
-        registrarDatosTransaccion(teclado, idTransaccion);
-        setTipoMovimiento(tipoMovimiento);
-    }
-
-    /** Usado internamente por CuentaBancaria/Prestamo al registrar un movimiento ya validado. */
-    public void completar(String idTransaccion, String fecha, String descripcion,
-                           double monto, String tipoMovimiento) {
-        this.idTransaccion = ValidRegex.esTextoValido(idTransaccion) ? idTransaccion : "T000";
-        this.fecha = ValidFecha.validar(fecha) ? fecha : "01-01-1900";
-        this.monto = (monto > 0) ? monto : 0;
-        this.descripcion = ValidRegex.esTextoValido(descripcion) ? descripcion : "Sin descripcion";
-        setTipoMovimiento(tipoMovimiento);
-    }
-
-    private void setTipoMovimiento(String tipoMovimiento) {
-        if (tipoMovimiento != null && tipoValido(tipoMovimiento)) {
-            this.tipoMovimiento = tipoMovimiento.toUpperCase();
-        } else {
-            this.tipoMovimiento = "DEPOSITO";
-        }
-    }
-
-    private boolean tipoValido(String tipo) {
-        String t = tipo.trim().toUpperCase();
-        return t.equals("DEPOSITO") || t.equals("RETIRO")
-                || t.equals("PAGO") || t.equals("COBRO");
+    /** Usado por CuentaBancaria al registrar un movimiento ya validado. */
+    public void completar(String idTransaccion, String descripcion, double monto,
+                          String tipoMovimiento, double saldoResultante) {
+        fijarDatosTransaccion(idTransaccion, ValidFecha.hoy(), monto, descripcion);
+        this.tipoMovimiento = RETIRO.equals(tipoMovimiento) ? RETIRO : DEPOSITO;
+        this.saldoResultante = saldoResultante;
     }
 
     public String getTipoMovimiento() { return tipoMovimiento; }
+    public double getSaldoResultante() { return saldoResultante; }
 
     public boolean esIngreso() {
-        return tipoMovimiento.equals("DEPOSITO") || tipoMovimiento.equals("COBRO");
+        return tipoMovimiento.equals(DEPOSITO);
     }
 
     @Override
     public String getTipo() {
         return tipoMovimiento;
+    }
+
+    @Override
+    public String resumen() {
+        String signo = esIngreso() ? "+" : "-";
+        return String.format("%-6s | %s | %-8s | %14s | Saldo: %13s | %s",
+                idTransaccion, fecha, tipoMovimiento, signo + Dinero.formatear(monto),
+                Dinero.formatear(saldoResultante), descripcion);
     }
 }

@@ -3,12 +3,10 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
- * ALUMNO 2 - Funcionalidad 1 (Registrar Gasto Mensual), ya existente
- * desde la entrega anterior y ahora adaptada a la herencia de
- * Transaccion y al estilo sin constructor con parametros.
+ * ALUMNO 2 - Registrar Gasto. Hereda de Transaccion (fecha, monto,
+ * descripcion) y agrega la categoria, la persona que gasta y si es
+ * un gasto ocasional o fijo.
  */
 public class Gasto extends Transaccion {
 
@@ -16,6 +14,8 @@ public class Gasto extends Transaccion {
     private boolean esOcasional;
     private boolean montoVariable;
     private Empleado persona;
+    /** Cuenta con la que se pago. Si es null, se pago en efectivo. */
+    private CuentaBancaria cuentaPago;
 
     public Gasto() {
         super();
@@ -23,30 +23,14 @@ public class Gasto extends Transaccion {
         this.esOcasional = false;
         this.montoVariable = false;
         this.persona = null;
+        this.cuentaPago = null;
     }
 
-    public void registrar(Scanner teclado, String idTransaccion) {
-        registrarDatosTransaccion(teclado, idTransaccion);
-
-        String respuesta;
-        do {
-            System.out.print("Es un gasto ocasional? (S/N): ");
-            respuesta = teclado.nextLine();
-            if (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N")) {
-                System.out.println("Responda con S o N.");
-            }
-        } while (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N"));
-        this.esOcasional = respuesta.equalsIgnoreCase("S");
-
+    public void registrar(String idTransaccion) {
+        registrarDatosTransaccion(idTransaccion);
+        this.esOcasional = Consola.leerSiNo("Es un gasto ocasional (no se repite)?");
         if (!esOcasional) {
-            do {
-                System.out.print("El monto es variable cada mes? (S/N): ");
-                respuesta = teclado.nextLine();
-                if (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N")) {
-                    System.out.println("Responda con S o N.");
-                }
-            } while (!respuesta.equalsIgnoreCase("S") && !respuesta.equalsIgnoreCase("N"));
-            this.montoVariable = respuesta.equalsIgnoreCase("S");
+            this.montoVariable = Consola.leerSiNo("El monto cambia cada mes?");
         }
     }
 
@@ -54,13 +38,19 @@ public class Gasto extends Transaccion {
     public boolean isEsOcasional() { return esOcasional; }
     public boolean isMontoVariable() { return montoVariable; }
     public Empleado getPersona() { return persona; }
+    public CuentaBancaria getCuentaPago() { return cuentaPago; }
 
     public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
     public void setPersona(Empleado persona) { this.persona = persona; }
+    public void setCuentaPago(CuentaBancaria cuentaPago) { this.cuentaPago = cuentaPago; }
+
+    public String getMedioPago() {
+        return (cuentaPago != null) ? "Cuenta " + cuentaPago.getNumeroCuenta() : "Efectivo";
+    }
     public void setEsOcasional(boolean esOcasional) { this.esOcasional = esOcasional; }
     public void setMontoVariable(boolean montoVariable) { this.montoVariable = montoVariable; }
 
-    /** Para precargar datos de prueba sin pasar por el Scanner. */
+    /** Para precargar datos de prueba sin pasar por el teclado. */
     public void fijarDatos(String idTransaccion, String fecha, double monto, String descripcion) {
         fijarDatosTransaccion(idTransaccion, fecha, monto, descripcion);
     }
@@ -85,9 +75,6 @@ public class Gasto extends Transaccion {
     public String resumen() {
         String nombreCategoria = (categoria != null) ? categoria.getNombreCategoria() : "Sin categoria";
         String nombrePersona = (persona != null) ? persona.getNombreCompleto() : "Sin persona";
-        String mensaje = super.resumen();
-        mensaje += "\nCategoria: " + nombreCategoria;
-        mensaje += "\nPersona: " + nombrePersona;
-        return mensaje;
+        return super.resumen() + " | " + nombreCategoria + " | " + nombrePersona + " | " + getMedioPago();
     }
 }

@@ -3,16 +3,14 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
- * ALUMNO 1 - Funcionalidad 2 (Registrar Trabajo), aplicando lo visto
- * en clase: sin constructor con parametros, registro con Scanner +
- * try-catch/regex, relaciones con Empresa/Cargo/Empleado ya creados
- * (agregacion) asignadas por setter despues de que Main muestre las
- * listas y el usuario seleccione.
+ * ALUMNO 1 - Registrar Trabajo. Relaciona a un Empleado con una
+ * Empresa y un Cargo ya registrados (agregacion), asignados por
+ * setter despues de que el menu muestre las listas.
  */
 public class Trabajo implements IValidable, IConsultable {
+
+    private static final String[] TIPOS_CONTRATO = {"Planilla", "Independiente", "Contrato", "Practicas"};
 
     private Empresa empresa;
     private Cargo cargo;
@@ -23,51 +21,21 @@ public class Trabajo implements IValidable, IConsultable {
     public Trabajo() {
         this.empresa = null;
         this.cargo = null;
-        this.fechaIngreso = "01-01-1900";
-        this.tipoContrato = "Independiente";
+        this.fechaIngreso = "";
+        this.tipoContrato = TIPOS_CONTRATO[0];
         this.empleado = null;
     }
 
-    public void registrar(Scanner teclado) {
-        String entrada;
+    public void registrar() {
+        this.fechaIngreso = Consola.leerFechaPasada("Fecha de ingreso (dd-mm-aaaa):");
 
-        do {
-            System.out.print("Fecha de ingreso (dd-mm-aaaa): ");
-            entrada = teclado.nextLine();
-            if (!ValidFecha.validar(entrada)) {
-                System.out.println("Fecha invalida. Use el formato dd-mm-aaaa.");
-            }
-        } while (!ValidFecha.validar(entrada));
-        this.fechaIngreso = entrada;
-
-        int opcion;
-        boolean valido = false;
-        do {
-            System.out.println("Tipo de contrato:");
-            System.out.println("1. Planilla");
-            System.out.println("2. Independiente");
-            System.out.println("3. Contrato");
-            System.out.println("4. Practicas");
-            try {
-                opcion = Integer.parseInt(teclado.nextLine());
-                if (opcion >= 1 && opcion <= 4) {
-                    valido = true;
-                } else {
-                    System.out.println("Opcion fuera de rango.");
-                    opcion = -1;
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero valido.");
-                opcion = -1;
-            }
-        } while (!valido);
-
-        switch (opcion) {
-            case 1: this.tipoContrato = "Planilla"; break;
-            case 2: this.tipoContrato = "Independiente"; break;
-            case 3: this.tipoContrato = "Contrato"; break;
-            case 4: this.tipoContrato = "Practicas"; break;
+        String mensaje = "Tipo de contrato:";
+        for (int i = 0; i < TIPOS_CONTRATO.length; i++) {
+            mensaje += "\n" + (i + 1) + ". " + TIPOS_CONTRATO[i];
         }
+        System.out.println(mensaje);
+        int opcion = Consola.leerEntero("Seleccione una opcion:", 1, TIPOS_CONTRATO.length);
+        this.tipoContrato = TIPOS_CONTRATO[opcion - 1];
     }
 
     public Empresa getEmpresa() { return empresa; }
@@ -87,8 +55,10 @@ public class Trabajo implements IValidable, IConsultable {
     }
 
     public void setTipoContrato(String tipoContrato) {
-        if (ValidRegex.esTextoValido(tipoContrato)) {
-            this.tipoContrato = tipoContrato;
+        for (String tipo : TIPOS_CONTRATO) {
+            if (tipo.equalsIgnoreCase(tipoContrato)) {
+                this.tipoContrato = tipo;
+            }
         }
     }
 
@@ -115,6 +85,7 @@ public class Trabajo implements IValidable, IConsultable {
     @Override
     public String toString() {
         String nombreEmpleado = (empleado != null) ? empleado.getNombreCompleto() : "Sin empleado";
-        return nombreEmpleado + " | " + cargo + " en " + empresa;
+        return nombreEmpleado + " | " + cargo + " en " + empresa + " | " + tipoContrato
+                + " desde " + fechaIngreso;
     }
 }

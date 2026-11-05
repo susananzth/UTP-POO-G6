@@ -5,19 +5,20 @@ import java.util.regex.Pattern;
 /**
  * Clase utilitaria de validacion con expresiones regulares.
  * No mantiene estado: solo metodos estaticos, igual que ValidFecha.
- * Centraliza los patrones que antes se repetian como
- * correo.contains("@") en varias clases distintas.
  */
 public class ValidRegex {
 
+    /** usuario@dominio.com, tambien acepta subdominios: usuario@utp.edu.pe */
     private static final Pattern PATRON_CORREO =
-            Pattern.compile("^[\\w.+-]+@[\\w-]+\\.[A-Za-z]{2,}$");
+            Pattern.compile("^[\\w.+-]+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$");
 
+    /** Minimo 8 caracteres, con al menos una letra y un numero. */
     private static final Pattern PATRON_CONTRASENA =
             Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d).{8,}$");
 
-    private static final Pattern PATRON_SOLO_LETRAS =
-            Pattern.compile("^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$");
+    /** Numero de cuenta bancaria: solo digitos, entre 6 y 20. */
+    private static final Pattern PATRON_NUMERO_CUENTA =
+            Pattern.compile("^\\d{6,20}$");
 
     public static boolean esSoloDigitos(String texto, int longitud) {
         if (texto == null) {
@@ -40,11 +41,11 @@ public class ValidRegex {
         return PATRON_CONTRASENA.matcher(texto).matches();
     }
 
-    public static boolean esSoloLetras(String texto) {
+    public static boolean esNumeroCuentaValido(String texto) {
         if (texto == null) {
             return false;
         }
-        return PATRON_SOLO_LETRAS.matcher(texto.trim()).matches();
+        return PATRON_NUMERO_CUENTA.matcher(texto).matches();
     }
 
     public static boolean esTextoValido(String texto) {

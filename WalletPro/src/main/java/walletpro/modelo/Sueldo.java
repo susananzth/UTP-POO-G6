@@ -3,12 +3,10 @@ package walletpro.modelo;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
-import java.util.Scanner;
-
 /**
- * ALUMNO 1 - Funcionalidad 3 (Registrar Sueldo Mensual), nueva en
- * esta entrega. El Empleado se asigna por setter tras la seleccion
- * en Main (agregacion: Sueldo no es dueno del Empleado).
+ * ALUMNO 1 - Registrar Sueldo Mensual. El Empleado se asigna por
+ * setter tras la seleccion en el menu (agregacion: Sueldo no es
+ * dueno del Empleado).
  */
 public class Sueldo implements IValidable, IConsultable {
 
@@ -19,59 +17,15 @@ public class Sueldo implements IValidable, IConsultable {
 
     public Sueldo() {
         this.mes = 1;
-        this.anio = 1900;
+        this.anio = 2026;
         this.monto = 0;
         this.empleado = null;
     }
 
-    public void registrar(Scanner teclado) {
-        boolean valido = false;
-        do {
-            System.out.print("Mes (1-12): ");
-            try {
-                int valor = Integer.parseInt(teclado.nextLine());
-                if (valor >= 1 && valor <= 12) {
-                    this.mes = valor;
-                    valido = true;
-                } else {
-                    System.out.println("El mes debe estar entre 1 y 12.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero entero valido.");
-            }
-        } while (!valido);
-
-        valido = false;
-        do {
-            System.out.print("Anio (1900-2100): ");
-            try {
-                int valor = Integer.parseInt(teclado.nextLine());
-                if (valor >= 1900 && valor <= 2100) {
-                    this.anio = valor;
-                    valido = true;
-                } else {
-                    System.out.println("El anio debe estar entre 1900 y 2100.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero entero valido.");
-            }
-        } while (!valido);
-
-        valido = false;
-        do {
-            System.out.print("Monto del sueldo: ");
-            try {
-                double valor = Double.parseDouble(teclado.nextLine());
-                if (valor > 0) {
-                    this.monto = valor;
-                    valido = true;
-                } else {
-                    System.out.println("El monto debe ser mayor a 0.");
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero valido.");
-            }
-        } while (!valido);
+    public void registrar() {
+        this.mes = Consola.leerEntero("Mes (1-12):", 1, 12);
+        this.anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
+        this.monto = Consola.leerMonto("Monto del sueldo (S/):");
     }
 
     public int getMes() { return mes; }
@@ -88,15 +42,20 @@ public class Sueldo implements IValidable, IConsultable {
     }
 
     public void setAnio(int anio) {
-        if (anio >= 1900 && anio <= 2100) {
+        if (anio >= 2000 && anio <= 2100) {
             this.anio = anio;
         }
     }
 
     public void setMonto(double monto) {
         if (monto > 0) {
-            this.monto = monto;
+            this.monto = Dinero.redondear(monto);
         }
+    }
+
+    /** Periodo en formato mm/aaaa, ej. 09/2026 */
+    public String getPeriodo() {
+        return String.format("%02d/%d", mes, anio);
     }
 
     @Override
@@ -107,11 +66,6 @@ public class Sueldo implements IValidable, IConsultable {
     @Override
     public String resumen() {
         String nombreEmpleado = (empleado != null) ? empleado.getNombreCompleto() : "Sin empleado";
-        String mensaje = "Datos del sueldo";
-        mensaje += "\nMes: " + mes;
-        mensaje += "\nAnio: " + anio;
-        mensaje += "\nMonto: " + monto;
-        mensaje += "\nEmpleado: " + nombreEmpleado;
-        return mensaje;
+        return String.format("%s | %-25s | %13s", getPeriodo(), nombreEmpleado, Dinero.formatear(monto));
     }
 }
