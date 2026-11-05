@@ -1,12 +1,13 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
 /**
  * Clasifica un Prestamo (Personal, Hipotecario, Vehicular, etc.).
  */
-public class TipoPrestamo implements IValidable {
+public class TipoPrestamo implements IValidable, Serializable {
 
     private String nombre;
     private String descripcion;

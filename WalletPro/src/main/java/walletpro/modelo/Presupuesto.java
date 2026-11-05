@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * categoria y por mes para un empleado. CategoriaGasto y Empleado se
  * asignan por setter tras la seleccion en el menu (agregacion).
  */
-public class Presupuesto implements IValidable, IConsultable {
+public class Presupuesto implements IValidable, IConsultable, Serializable {
 
     private int mes;
     private int anio;

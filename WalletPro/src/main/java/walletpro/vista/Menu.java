@@ -1,5 +1,6 @@
 package walletpro.vista;
 
+import walletpro.datos.ArchivoBilletera;
 import walletpro.modelo.Billetera;
 import walletpro.util.Consola;
 
@@ -39,6 +40,9 @@ public abstract class Menu {
             opcion = Consola.leerEntero("Seleccione una opcion:", 0, opciones.length);
             if (opcion != 0) {
                 ejecutarOpcion(opcion);
+                // Se guarda despues de cada operacion: si el programa se cierra
+                // de golpe, no se pierde lo que ya se registro.
+                ArchivoBilletera.guardar(billetera);
             }
         } while (opcion != 0);
     }

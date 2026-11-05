@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -13,7 +14,7 @@ import walletpro.util.*;
  * registro interactivo por teclado (a traves de la clase Consola)
  * y setters que validan antes de asignar.
  */
-public abstract class Persona implements IValidable, IConsultable {
+public abstract class Persona implements IValidable, IConsultable, Serializable {
 
     protected String dni;
     protected String nombres;

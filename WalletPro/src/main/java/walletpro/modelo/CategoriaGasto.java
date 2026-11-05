@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -7,7 +8,7 @@ import walletpro.util.*;
  * Agrupa los gastos (Alimentacion, Transporte, Salud...). Los
  * presupuestos se definen por categoria.
  */
-public class CategoriaGasto implements IValidable {
+public class CategoriaGasto implements IValidable, Serializable {
 
     private String nombreCategoria;
     private String descripcion;

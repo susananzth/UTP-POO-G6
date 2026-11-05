@@ -1,5 +1,6 @@
 package walletpro.datos;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
  *   empleados.buscar(e -> e.getDni().equals("12345678"))
  * Predicate<T> es una interfaz de Java que recibe un T y devuelve true/false.
  */
-public class Repositorio<T> {
+public class Repositorio<T> implements Serializable {
 
     private List<T> elementos;
 

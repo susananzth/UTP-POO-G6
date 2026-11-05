@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * Un mismo cargo (ej. "Desarrollador") puede repetirse en varios
  * empleados, por eso se mantiene como clase propia.
  */
-public class Cargo implements IValidable {
+public class Cargo implements IValidable, Serializable {
 
     private String nombreCargo;
     private String descripcion;

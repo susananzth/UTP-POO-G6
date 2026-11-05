@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import walletpro.excepciones.OperacionInvalidaException;
@@ -15,7 +16,7 @@ import walletpro.util.*;
  * El saldo NO tiene setter: solo cambia con depositar() o retirar(),
  * y cada cambio queda guardado como Movimiento (trazabilidad).
  */
-public class CuentaBancaria implements OperacionFinanciera, IValidable, IConsultable {
+public class CuentaBancaria implements OperacionFinanciera, IValidable, IConsultable, Serializable {
 
     private static final String[] TIPOS_CUENTA = {"Ahorros", "Corriente"};
 

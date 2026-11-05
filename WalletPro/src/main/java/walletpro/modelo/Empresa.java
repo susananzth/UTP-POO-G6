@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * separada de Empleado porque una misma empresa puede dar empleo a
  * muchas personas dentro del sistema (agregacion).
  */
-public class Empresa implements IValidable {
+public class Empresa implements IValidable, Serializable {
 
     private String ruc;
     private String razonSocial;

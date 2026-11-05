@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import java.util.List;
 import walletpro.datos.Repositorio;
 import walletpro.excepciones.OperacionInvalidaException;
@@ -19,7 +20,7 @@ import walletpro.util.ValidFecha;
  * Las consultas usan streams y lambdas: filter() para quedarse con
  * algunos elementos, mapToDouble() para tomar los montos y sum() para sumarlos.
  */
-public class Billetera {
+public class Billetera implements Serializable {
 
     private Repositorio<Usuario> usuarios;
     private Repositorio<Empresa> empresas;

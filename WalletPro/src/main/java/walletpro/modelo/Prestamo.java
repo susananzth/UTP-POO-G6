@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.excepciones.OperacionInvalidaException;
 import walletpro.interfaces.*;
 import walletpro.util.*;
@@ -17,7 +18,7 @@ import walletpro.util.*;
  * La deuda (saldoPendiente) arranca en el TOTAL A PAGAR, no en el
  * monto prestado: asi el interes si se cobra.
  */
-public class Prestamo implements IValidable, IConsultable {
+public class Prestamo implements IValidable, IConsultable, Serializable {
 
     private String codigoPrestamo;
     private double montoOriginal;

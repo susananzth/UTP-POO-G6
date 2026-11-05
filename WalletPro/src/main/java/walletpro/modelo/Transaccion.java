@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -9,7 +10,7 @@ import walletpro.util.*;
  * en esencia, una transaccion, pero cada uno calcula su tipo de forma
  * distinta (getTipo() abstracto = polimorfismo).
  */
-public abstract class Transaccion implements IValidable, IConsultable {
+public abstract class Transaccion implements IValidable, IConsultable, Serializable {
 
     protected String idTransaccion;
     protected String fecha;

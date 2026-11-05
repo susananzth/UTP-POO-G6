@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * CuentaBancaria porque un mismo banco puede tener muchas cuentas
  * asociadas en el sistema (agregacion).
  */
-public class Banco implements IValidable {
+public class Banco implements IValidable, Serializable {
 
     private String codigoBanco;
     private String nombreBanco;

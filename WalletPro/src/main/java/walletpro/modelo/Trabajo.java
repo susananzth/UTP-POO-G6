@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * Empresa y un Cargo ya registrados (agregacion), asignados por
  * setter despues de que el menu muestre las listas.
  */
-public class Trabajo implements IValidable, IConsultable {
+public class Trabajo implements IValidable, IConsultable, Serializable {
 
     private static final String[] TIPOS_CONTRATO = {"Planilla", "Independiente", "Contrato", "Practicas"};
 

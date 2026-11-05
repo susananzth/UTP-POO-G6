@@ -1,5 +1,6 @@
 package walletpro.modelo;
 
+import java.io.Serializable;
 import walletpro.interfaces.*;
 import walletpro.util.*;
 
@@ -8,7 +9,7 @@ import walletpro.util.*;
  * setter tras la seleccion en el menu (agregacion: Sueldo no es
  * dueno del Empleado).
  */
-public class Sueldo implements IValidable, IConsultable {
+public class Sueldo implements IValidable, IConsultable, Serializable {
 
     private int mes;
     private int anio;
