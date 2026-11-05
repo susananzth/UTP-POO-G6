@@ -1,0 +1,21 @@
+# Compilados y archivos del IDE
+target/
+out/
+build/
+dist/
+*.class
+nbproject/private/
+nb-configuration.xml
+.idea/
+.vscode/
+
+# Datos guardados por la aplicacion al ejecutarse
+*.dat
+
+# Archivos personales / entregables comprimidos (no son codigo)
+*.zip
+*.rar
+*.png
+*.pdf
+*.drawio.bkp
+~$*
