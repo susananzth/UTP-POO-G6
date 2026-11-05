@@ -1,4 +1,4 @@
-package walletpro;
+package walletpro.util;
 
 import java.util.regex.Pattern;
 

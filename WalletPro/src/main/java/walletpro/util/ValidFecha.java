@@ -1,4 +1,4 @@
-package walletpro;
+package walletpro.util;
 
 /**
  * Clase utilitaria de validacion de fechas (formato dd-mm-aaaa).

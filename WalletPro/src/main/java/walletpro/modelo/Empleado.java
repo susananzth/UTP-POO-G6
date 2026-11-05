@@ -1,4 +1,7 @@
-package walletpro;
+package walletpro.modelo;
+
+import walletpro.interfaces.*;
+import walletpro.util.*;
 
 import java.util.Scanner;
 

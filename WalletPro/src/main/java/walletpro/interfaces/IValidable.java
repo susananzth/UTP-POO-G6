@@ -1,4 +1,4 @@
-package walletpro;
+package walletpro.interfaces;
 
 /**
  * Contrato que deben cumplir todas las clases que registran datos

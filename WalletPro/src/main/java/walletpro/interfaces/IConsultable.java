@@ -1,4 +1,4 @@
-package walletpro;
+package walletpro.interfaces;
 
 /**
  * Contrato comun para mostrar el detalle de una entidad de forma

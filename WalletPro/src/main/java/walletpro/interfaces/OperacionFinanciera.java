@@ -1,4 +1,4 @@
-package walletpro;
+package walletpro.interfaces;
 
 /**
  * Contrato para las clases que ejecutan movimientos de dinero en

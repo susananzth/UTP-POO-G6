@@ -1,4 +1,7 @@
-package walletpro;
+package walletpro.servicio;
+
+import walletpro.modelo.Usuario;
+import walletpro.util.ValidRegex;
 
 /**
  * Encapsula el flujo de recuperacion de contrasena: busca al Usuario

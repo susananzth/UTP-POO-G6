@@ -1,4 +1,7 @@
-package walletpro;
+package walletpro.servicio;
+
+import walletpro.modelo.Usuario;
+import walletpro.util.ValidRegex;
 
 /**
  * ALUMNO 1 - auth: resuelve "Registrar Usuario" dentro del menu de

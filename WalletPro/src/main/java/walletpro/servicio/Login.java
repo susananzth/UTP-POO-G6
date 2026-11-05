@@ -1,4 +1,7 @@
-package walletpro;
+package walletpro.servicio;
+
+import walletpro.modelo.Usuario;
+import walletpro.util.ValidRegex;
 
 /**
  * Encapsula el inicio de sesion, separado de Usuario para que la

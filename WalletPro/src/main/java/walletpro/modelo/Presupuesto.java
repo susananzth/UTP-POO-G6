@@ -1,23 +1,29 @@
-package walletpro;
+package walletpro.modelo;
+
+import walletpro.interfaces.*;
+import walletpro.util.*;
 
 import java.util.Scanner;
 
 /**
- * ALUMNO 1 - Funcionalidad 3 (Registrar Sueldo Mensual), nueva en
- * esta entrega. El Empleado se asigna por setter tras la seleccion
- * en Main (agregacion: Sueldo no es dueno del Empleado).
+ * ALUMNO 2 - Funcionalidad 3 (Registrar Presupuesto), nueva en esta
+ * entrega: define un limite de gasto por categoria y por mes para un
+ * empleado. CategoriaGasto y Empleado se asignan por setter tras la
+ * seleccion en Main (agregacion).
  */
-public class Sueldo implements IValidable, IConsultable {
+public class Presupuesto implements IValidable, IConsultable {
 
     private int mes;
     private int anio;
-    private double monto;
+    private double montoPresupuestado;
+    private CategoriaGasto categoria;
     private Empleado empleado;
 
-    public Sueldo() {
+    public Presupuesto() {
         this.mes = 1;
         this.anio = 1900;
-        this.monto = 0;
+        this.montoPresupuestado = 0;
+        this.categoria = null;
         this.empleado = null;
     }
 
@@ -56,11 +62,11 @@ public class Sueldo implements IValidable, IConsultable {
 
         valido = false;
         do {
-            System.out.print("Monto del sueldo: ");
+            System.out.print("Monto presupuestado: ");
             try {
                 double valor = Double.parseDouble(teclado.nextLine());
                 if (valor > 0) {
-                    this.monto = valor;
+                    this.montoPresupuestado = valor;
                     valido = true;
                 } else {
                     System.out.println("El monto debe ser mayor a 0.");
@@ -73,9 +79,11 @@ public class Sueldo implements IValidable, IConsultable {
 
     public int getMes() { return mes; }
     public int getAnio() { return anio; }
-    public double getMonto() { return monto; }
+    public double getMontoPresupuestado() { return montoPresupuestado; }
+    public CategoriaGasto getCategoria() { return categoria; }
     public Empleado getEmpleado() { return empleado; }
 
+    public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
     public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
 
     public void setMes(int mes) {
@@ -90,24 +98,40 @@ public class Sueldo implements IValidable, IConsultable {
         }
     }
 
-    public void setMonto(double monto) {
-        if (monto > 0) {
-            this.monto = monto;
+    public void setMontoPresupuestado(double montoPresupuestado) {
+        if (montoPresupuestado > 0) {
+            this.montoPresupuestado = montoPresupuestado;
         }
+    }
+
+    /** Suma, de un arreglo de gastos, los que caen en este mes/anio/categoria/empleado. */
+    public double calcularGastado(Gasto[] gastos, int totalGastos) {
+        double total = 0;
+        for (int i = 0; i < totalGastos; i++) {
+            Gasto g = gastos[i];
+            if (g.getCategoria() == categoria && g.getPersona() == empleado
+                    && ValidFecha.obtenerMesAnio(g.getFecha(), mes, anio)) {
+                total += g.getMonto();
+            }
+        }
+        return total;
     }
 
     @Override
     public boolean validar() {
-        return monto > 0 && mes >= 1 && mes <= 12 && empleado != null;
+        return montoPresupuestado > 0 && mes >= 1 && mes <= 12
+                && categoria != null && empleado != null;
     }
 
     @Override
     public String resumen() {
+        String nombreCategoria = (categoria != null) ? categoria.getNombreCategoria() : "Sin categoria";
         String nombreEmpleado = (empleado != null) ? empleado.getNombreCompleto() : "Sin empleado";
-        String mensaje = "Datos del sueldo";
+        String mensaje = "Datos del presupuesto";
         mensaje += "\nMes: " + mes;
         mensaje += "\nAnio: " + anio;
-        mensaje += "\nMonto: " + monto;
+        mensaje += "\nCategoria: " + nombreCategoria;
+        mensaje += "\nMonto presupuestado: " + montoPresupuestado;
         mensaje += "\nEmpleado: " + nombreEmpleado;
         return mensaje;
     }

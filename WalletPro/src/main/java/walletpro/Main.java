@@ -1,5 +1,8 @@
 package walletpro;
 
+import walletpro.modelo.*;
+import walletpro.servicio.*;
+
 import java.util.Scanner;
 
 public class Main {
