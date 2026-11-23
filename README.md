@@ -2,58 +2,45 @@
 
 Grupo 5 · Sección 45270 · Docente: Espinoza Paredes, Christian Eduardo
 
-| Integrante | Código | Rol |
-|---|---|---|
-| Eliott Duran, Carlos Jeremy | U25246351 | PMO |
-| Moreno Padilla, Keyner Eduardo | U25246100 | Imagen |
-| Piñero Rodriguez, Susana Nazareth | U25257191 | Delegada |
+| Integrante | Código | Rol | Módulo |
+|---|---|---|---|
+| Piñero Rodriguez, Susana Nazareth | U25257191 | Delegada | Alumno 1 – Ingresos y Ahorros |
+| Moreno Padilla, Keyner Eduardo | U25246100 | Imagen | Alumno 2 – Gastos y Presupuesto |
+| Eliott Duran, Carlos Jeremy | U25246351 | PMO | Alumno 3 – Bancos y Préstamos |
 
-Módulos: **Alumno 1** – Ingresos y Ahorros · **Alumno 2** – Gastos y Presupuesto · **Alumno 3** – Bancos y Préstamos.
+Aplicación de consola en Java que registra los ingresos (sueldos), los gastos, los presupuestos mensuales, las cuentas bancarias y los préstamos de una persona. Guarda todo en **SQL Server** y maneja **una sola moneda (soles, S/)**.
 
-Aplicación de consola en Java que registra los ingresos (sueldos), los gastos, los presupuestos mensuales, las cuentas bancarias y los préstamos de una persona. Maneja **una sola moneda (soles, S/)**.
+## Cómo ejecutarlo
 
-## Cómo abrir y ejecutar en NetBeans
+1. Preparar SQL Server y crear la base con `WalletPro/sql/walletpro.sql`. Los pasos están en [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
+2. NetBeans → **File → Open Project…** → carpeta `WalletPro`. La primera vez descarga el driver de SQL Server (necesita internet).
+3. **Run** (F6). La clase principal es `walletpro.Main`.
+4. Usuario de prueba: `Administrador` / `admin1234`.
 
-1. NetBeans → **File → Open Project…** → elegir la carpeta `WalletPro` (tiene el ícono de proyecto Maven).
-2. Clic derecho en el proyecto → **Run** (o F6). La clase principal es `walletpro.Main`.
-3. La primera vez se cargan datos de prueba. Usuario: `Administrador`, contraseña: `admin1234`.
-4. Los datos se guardan en `WalletPro/walletpro.dat`. Borren ese archivo para empezar de cero con los datos de prueba.
+Requiere **Java 21 o superior**.
 
-Sin NetBeans, desde la carpeta `WalletPro`:
-
-```bash
-javac -d out -encoding UTF-8 $(find src -name "*.java")
-```
-
-```bash
-java -cp out walletpro.Main
-```
-
-## Git desde NetBeans (sí, se puede, como en VS Code)
-
-NetBeans trae Git incorporado; no hay que instalar nada adicional.
-
-- **Ver qué cambió:** los archivos modificados aparecen en azul y los nuevos en verde. Clic derecho en el proyecto → **Git → Diff** para ver los cambios línea por línea.
-- **Historial de versiones:** clic derecho → **Git → Show History**. Ahí están todos los commits y pueden ver cómo era cada archivo antes.
-- **Guardar una versión (commit):** clic derecho → **Git → Commit…**, escribir qué hicieron y aceptar.
-- **Subir a GitHub:** clic derecho → **Git → Remote → Push…**.
-- **Traer los cambios de los compañeros:** clic derecho → **Git → Remote → Pull…**.
-- Para trabajar los tres a la vez, cada uno puede clonar el repositorio con **Team → Git → Clone…** y la URL `https://github.com/susananzth/UTP-POO-G6.git`.
-
-## Estructura del proyecto
+## Estructura
 
 ```
-WalletPro/src/main/java/walletpro/
-├── Main.java            Punto de entrada: carga la billetera y abre el menú de acceso
-├── modelo/              Entidades del negocio (Persona, Usuario, Empleado, Gasto, CuentaBancaria, Prestamo...)
-│   └── Billetera.java   Guarda todos los datos y aplica las reglas (sin duplicados, saldo suficiente...)
-├── vista/               Menús de consola: Menu (abstracta), MenuAcceso, MenuPrincipal,
-│                        MenuIngresos (Alumno 1), MenuGastos (Alumno 2), MenuBancos (Alumno 3)
-├── servicio/            Login, RegistrarUsuario, RecuperarContrasena
-├── datos/               Repositorio<T> (genérico), ArchivoBilletera (persistencia), DatosDePrueba
-├── interfaces/          IValidable, IConsultable, OperacionFinanciera
-├── excepciones/         OperacionInvalidaException
-└── util/                Consola (teclado), Dinero (soles), ValidFecha, ValidRegex
+WalletPro/
+├── sql/walletpro.sql        Tablas, datos de prueba y usuario de la base
+└── src/main/java/walletpro/
+    ├── Main.java            Punto de entrada
+    ├── conexion/            Conexion (SQL Server)
+    ├── modelo/              Persona, Usuario, Empleado, Transaccion, Gasto, Movimiento,
+    │                        CuentaBancaria, Prestamo, Presupuesto, Sueldo, Trabajo...
+    ├── dao/                 Un DAO por tabla (INSERT / SELECT / UPDATE / DELETE)
+    ├── vista/               MenuAcceso, MenuPrincipal, MenuIngresos, MenuGastos, MenuBancos
+    ├── interfaces/          IDAO<T>, IConsultable, OperacionFinanciera
+    └── util/                Consola, Validacion, Dinero, Paginador<T>, ComparadorGastoPorMonto
 ```
 
-La guía para preparar la sustentación está en [docs/GUIA_SUSTENTACION.md](docs/GUIA_SUSTENTACION.md).
+Guía para estudiar la sustentación: [docs/GUIA_SUSTENTACION.md](docs/GUIA_SUSTENTACION.md).
+
+## Git desde NetBeans
+
+- **Ver qué cambió:** clic derecho en el proyecto → **Git → Diff**.
+- **Historial:** clic derecho → **Git → Show History**.
+- **Guardar una versión:** clic derecho → **Git → Commit…**.
+- **Subir / traer cambios:** **Git → Remote → Push…** / **Pull…**.
+- **Clonar:** **Team → Git → Clone…** con `https://github.com/susananzth/UTP-POO-G6.git`.

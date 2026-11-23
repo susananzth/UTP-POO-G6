@@ -1,142 +1,138 @@
 # Guía para la sustentación de WalletPro
 
-Esta guía explica **qué se cambió, por qué, y cómo defenderlo** si el profesor pregunta. Está ordenada para que cada integrante estudie primero lo común y luego su módulo.
+Lean primero las secciones 1 a 4, que son de todos. Después, cada uno estudia su módulo (sección 5).
 
 ---
 
-## 1. Qué indicaciones del profesor se aplicaron y dónde
+## 1. Cómo está organizado el proyecto
 
-| Indicación | Dónde está en el código |
+```
+walletpro/
+├── Main.java        Empieza aquí: prueba la conexión y abre el menú de acceso
+├── conexion/        Conexion: abre la conexión a SQL Server (como la Coneccion del profesor)
+├── modelo/          Las "cosas" del sistema: Empleado, Gasto, CuentaBancaria, Prestamo...
+├── dao/             Una clase por tabla: guarda y lee de SQL Server (INSERT, SELECT, UPDATE, DELETE)
+├── vista/           Los menús de consola
+├── interfaces/      IDAO<T>, IConsultable, OperacionFinanciera
+└── util/            Consola (teclado), Validacion, Dinero, Paginador<T>, ComparadorGastoPorMonto
+```
+
+**Regla para no perderse:** cada clase empieza con un comentario que dice *quién la usa*, y cada método dice **"Lo llama: …"**.
+
+### Recorrido de una opción (ejemplo: registrar un gasto)
+
+```
+Main.main()
+ └─ MenuAcceso.mostrar() → iniciarSesion()
+     └─ MenuPrincipal.mostrar()  (opción 2)
+         └─ MenuGastos.mostrar() → registrarGasto()
+             ├─ empleadoDAO.listar()            SELECT de empleados
+             ├─ Consola.seleccionar(...)        el usuario elige uno
+             ├─ gasto.registrar()               pide fecha, monto, descripción
+             ├─ revisarPresupuesto(gasto)       ¿se pasa del presupuesto?
+             ├─ cuenta.retirar(...)             si paga con cuenta (devuelve null si no alcanza)
+             ├─ gastoDAO.insertar(gasto)        INSERT INTO gasto
+             └─ cuentaDAO.guardarMovimiento()   UPDATE saldo + INSERT movimiento
+```
+
+**Todas las opciones de "Registrar" siguen los mismos 3 pasos:**
+
+1. `Empresa empresa = new Empresa();` → se crea el objeto vacío.
+2. `empresa.registrar();` → se piden los datos por teclado.
+3. `empresaDAO.insertar(empresa);` → se guarda en SQL Server.
+
+En NetBeans, **Ctrl + clic** sobre un método los lleva a donde está escrito, y **Alt + F7** (*Find Usages*) muestra desde dónde se llama.
+
+---
+
+## 2. Indicaciones del profesor y dónde se cumplen
+
+| Indicación | Dónde |
 |---|---|
-| No usar `nextLine()` | `util/Consola.java`: el `Scanner` se crea con `useDelimiter("\\R")` y se lee con `next()` |
-| Prompts con `println` (no `print`) | Todos los mensajes al usuario usan `System.out.println` |
-| Usar `printf` para dar formato | `MenuGastos`, `MenuBancos` (`System.out.printf(...)`) y `String.format(...)` en tablas |
-| No usar `scanner.close()` | `Consola` nunca lo cierra (comentario explicando por qué) |
-| Variable `mensaje` y un solo print | Todos los listados: `String mensaje = "";` → `for` con `mensaje += ...` → `System.out.println(mensaje)` |
-| Una sola moneda | `util/Dinero.java`: constante `MONEDA = "S/"`, sin tipo de cambio |
-| Manejar bien el presupuesto (¿qué pasa si me excedo?) | `MenuGastos.revisarPresupuesto()` y `Presupuesto.calcularEstado()` |
-| Más clases si se necesitan, sin sobreingeniería | `Billetera`, `Repositorio<T>`, `Consola`, `Dinero`, `Menu` y sus submenús, `ArchivoBilletera`, `OperacionInvalidaException` |
-
-### ¿Por qué `useDelimiter("\\R")` + `next()`?
-
-`next()` normalmente lee hasta el primer espacio: con "Juan Carlos" solo leería "Juan". Al decirle al `Scanner` que el separador es el **salto de línea** (`\\R`), `next()` devuelve la línea completa, con espacios incluidos. Así cumplimos "no usar `nextLine()`" y además evitamos el problema clásico de `nextInt()` seguido de `nextLine()` (que deja el Enter sin leer).
-
-### ¿Por qué no se cierra el `Scanner`?
-
-El `Scanner` está conectado a `System.in` (el teclado). Si se cierra, también se cierra `System.in`, y ningún otro `Scanner` podría volver a leer en todo el programa. Por eso hay **un solo `Scanner`** en `Consola` y nunca se cierra.
+| Sin constructores con parámetros | Ninguna clase los tiene. Los datos se asignan con setters o con `registrar()`. `MenuPrincipal` recibe el usuario con `setUsuario(...)`. |
+| No usar `nextLine()` | `util/Consola.java`: el `Scanner` usa `useDelimiter("\\R")` y se lee con `next()`, que así lee la línea completa (con espacios). |
+| No cerrar el `Scanner` | `Consola` nunca hace `teclado.close()`. Cerrarlo cerraría `System.in` y ya no se podría leer el teclado. |
+| Mensajes con `println` (y `printf` con `%n`) | Todos los mensajes. Los `printf` terminan en `%n` (salto de línea). |
+| Variable `mensaje` y un solo print | Menús y listados: `String mensaje = ...;` → `mensaje += ...` → `System.out.println(mensaje)`. |
+| Usar base de datos | SQL Server: `sql/walletpro.sql` (tablas) + paquete `dao` (SQL desde Java). |
+| Una sola moneda | `util/Dinero.java`: todo en soles. |
 
 ---
 
-## 2. Cómo responde el sistema al exceder el presupuesto
+## 3. Temas del curso y dónde están en el código
 
-Al registrar un gasto, antes de guardarlo, `MenuGastos.revisarPresupuesto()` busca el presupuesto de **esa persona, esa categoría y ese mes**:
-
-1. **No hay presupuesto:** solo avisa ("no hay presupuesto de Alimentación para 11/2026") y registra el gasto.
-2. **Con el gasto se llega al 80 % o más:** muestra **ALERTA** con el porcentaje usado y cuánto queda.
-3. **Con el gasto se pasa del límite:** muestra el límite, lo gastado, cómo quedaría y **cuánto se excede**, y pregunta *"¿Desea registrarlo de todos modos?"*. Si dice que no, el gasto se cancela.
-
-**¿Por qué no se prohíbe el gasto?** Porque en la vida real el gasto ya ocurrió (ya pagaste la cena). Una billetera debe registrarlo igual, pero dejando al usuario advertido. Prohibirlo haría que el registro no coincida con la realidad.
-
-La opción **"Consultar estado de presupuestos"** muestra una tabla con límite, gastado, disponible, % de uso y estado: **OK** (< 80 %), **ALERTA** (≥ 80 %) o **EXCEDIDO** (> 100 %).
-
----
-
-## 3. Decisiones de diseño (las preguntas más probables)
-
-### ¿Por qué hay paquetes?
-La rúbrica pide "arquitectura definida mediante paquetes, con alta cohesión". Cada paquete agrupa clases con una sola responsabilidad: `modelo` (datos y reglas), `vista` (menús), `servicio` (acceso), `datos` (guardar y listas), `util` (herramientas), `interfaces` y `excepciones`.
-
-### ¿Qué es `Billetera` y por qué existe?
-Es el objeto central: **la billetera del usuario**. Guarda todas las listas (empleados, gastos, cuentas...) y valida las reglas antes de aceptar un dato (que no se repita un DNI, un RUC o un número de cuenta; que no se registre dos veces el sueldo del mismo mes; etc.). Antes todo esto estaba mezclado en `Main` (940 líneas); ahora los menús solo piden datos y muestran resultados.
-
-### ¿Qué es `Repositorio<T>`? (clase genérica)
-Antes había 13 arreglos con su contador (`Gasto[] gastos = new Gasto[500]; int totalGastos;`). `Repositorio<T>` es **una sola clase que sirve para cualquier tipo**: la `T` se reemplaza por el tipo real al usarla (`Repositorio<Gasto>`, `Repositorio<Banco>`). Por dentro usa un `ArrayList`, que crece solo (ya no hay límite de 500).
-
-### ¿Dónde están las lambdas y los streams?
-- `Repositorio`: `buscar`, `filtrar` y `existe` reciben una **lambda** como condición. Ejemplo en `Billetera`:
-  `empleados.existe(e -> e.getDni().equals(empleado.getDni()))` → "¿existe algún empleado con este DNI?".
-- `Billetera.totalIngresosDelMes()` y `calcularGastado()` usan **streams**:
-  `.filter(...)` se queda con los del mes → `.mapToDouble(g -> g.getMonto())` toma los montos → `.sum()` los suma.
-- `Predicate<T>` es una interfaz de Java que recibe un objeto y devuelve `true` o `false`; la lambda es la forma corta de escribirla.
-
-### ¿Dónde están los 4 pilares de la POO?
-
-| Pilar | Ejemplo en el código |
-|---|---|
-| **Encapsulamiento** | Atributos `private` con setters que validan. `CuentaBancaria` **no tiene `setSaldo`**: el saldo solo cambia con `depositar()`/`retirar()`. `Usuario` no tiene `getContrasena()`: solo se puede comprobar, no leer. |
-| **Herencia** | `Usuario` y `Empleado` heredan de `Persona`. `Gasto` y `Movimiento` heredan de `Transaccion`. `MenuIngresos`, `MenuGastos`, etc. heredan de `Menu`. |
-| **Abstracción** | `Persona`, `Transaccion` y `Menu` son **clases abstractas**: no se pueden instanciar, solo definen lo común. Las interfaces `IValidable`, `IConsultable` y `OperacionFinanciera` definen "contratos". |
-| **Polimorfismo** | `getTipo()` es abstracto en `Transaccion`: un `Gasto` responde "FIJO"/"OCASIONAL" y un `Movimiento` responde "DEPOSITO"/"RETIRO". En `MenuPrincipal`, la variable `Menu submenu` puede ser cualquiera de los tres submenús y `submenu.mostrar()` ejecuta el que corresponde. |
-
-### ¿Por qué la clase abstracta `Menu`?
-Todos los menús hacían lo mismo: mostrar opciones, leer la opción, ejecutarla y repetir hasta elegir 0. Eso quedó **una sola vez** en `Menu.mostrar()`. Cada submenú solo dice cuáles son sus opciones (`getOpciones()`) y qué hace cada una (`ejecutarOpcion()`).
-
-### ¿Por qué una excepción propia (`OperacionInvalidaException`)?
-Para avisar que **se rompió una regla del negocio** (saldo insuficiente, RUC repetido, cuenta de otra persona...). Es *checked* (extiende de `Exception`), así que Java obliga a atraparla con `try-catch`: ningún error se pasa por alto. Los menús la atrapan y muestran `e.getMessage()`.
-
-Las excepciones de Java también se usan: `NumberFormatException` en `Consola` (cuando escriben letras donde va un número), `IOException` en `ArchivoBilletera` y `NoSuchElementException` en `Main`.
-
-### ¿Cómo se guardan los datos? (persistencia)
-Con **serialización** (`ArchivoBilletera`): toda la `Billetera` se escribe en `walletpro.dat` con `ObjectOutputStream` y se lee al abrir el programa con `ObjectInputStream`. Por eso las clases del modelo implementan `Serializable`. Se guarda después de cada operación y al salir. Se usa *try-with-resources*, que cierra el archivo automáticamente.
-
-### ¿Cómo se maneja el dinero?
-- Una sola moneda: soles (`Dinero.MONEDA`).
-- Todo monto se **redondea a céntimos** (`Dinero.redondear`). Así se evitan errores de `double` como `0.30 - 0.10 = 0.19999...`. No se usó `BigDecimal` para no complicar el código.
-- Se rechazan montos negativos, cero, `Infinity` y `NaN` (`Consola.leerMonto`).
-- **Trazabilidad:** cada depósito, retiro, pago de gasto, sueldo depositado o cuota de préstamo queda como `Movimiento` con fecha real y el saldo resultante. Opción "Ver movimientos de una cuenta".
-
-### ¿Cómo se calcula el préstamo?
-Interés simple: `interés = monto × (tasa/100) × cuotas`; `total = monto + interés`; `cuota = total / cuotas`.
-Ejemplo: S/ 1,000 al 10 % mensual en 2 cuotas → interés S/ 200 → total S/ 1,200 → cuota S/ 600.
-La deuda arranca en el **total a pagar** (antes arrancaba en el monto prestado y el interés nunca se cobraba). Cada cuota se paga **desde una cuenta del mismo deudor**; si no hay saldo, no se paga y la deuda no cambia. La última cuota paga exactamente lo que falta, para que no queden céntimos sueltos.
+| Tema (semana) | Dónde | Qué decir |
+|---|---|---|
+| **Encapsulamiento** | Todas las clases del `modelo` | Atributos `private` y acceso con getters y setters. `Transaccion.setMonto()` valida que sea > 0. El saldo solo cambia con `depositar()`/`retirar()`. |
+| **Herencia** | `Usuario` y `Empleado` heredan de `Persona`. `Gasto` y `Movimiento` heredan de `Transaccion`. | Las hijas reutilizan los datos y métodos del padre (`registrarDatosPersonales()`). |
+| **Abstracción / clase abstracta** | `Persona`, `Transaccion` | No se puede hacer `new Persona()`. Tienen métodos abstractos: `getRol()` y `getTipo()`. |
+| **Polimorfismo** | `getTipo()`: un `Gasto` responde FIJO/OCASIONAL y un `Movimiento` responde DEPOSITO/RETIRO. `resumen()` es distinto en cada clase. | `Consola.mostrarLista()` llama a `resumen()` sin saber de qué clase es el objeto. |
+| **Sobrescritura (`@Override`)** | `Gasto.resumen()` usa `super.resumen()` y le agrega datos | — |
+| **Interfaces** | `IConsultable`, `OperacionFinanciera`, `IDAO<T>` | Son contratos. `CuentaBancaria` implementa dos interfaces a la vez (herencia múltiple con interfaces). |
+| **Relaciones entre clases** | `Trabajo` tiene un `Empleado`, una `Empresa` y un `Cargo` (asociación). `Movimiento` pertenece a una `CuentaBancaria` (composición). Los menús *usan* `Consola` (dependencia). | — |
+| **Excepciones** | `Consola.leerEntero()` (`NumberFormatException`), `Validacion.esFechaValida()` (`DateTimeParseException`) y todos los DAO (`SQLException`) | Si el usuario escribe letras donde va un número, el programa no se cae: vuelve a preguntar. |
+| **ArrayList** (11) | Todos los `listar()` devuelven `ArrayList<T>` | — |
+| **HashMap** (11) | `MenuIngresos.resumenAhorro()` | Clave = nombre de la categoría, valor = total gastado. Se recorre con `entrySet()`, igual que en la diapositiva del profesor. |
+| **Comparator** (12) | `util/ComparadorGastoPorMonto` → se usa en `MenuGastos.listarGastosDelMes()` | Igual que `ComparadorCuota` del profesor. |
+| **Iterator** (12) | `MenuBancos.pagarCuota()` | `hasNext()` / `next()` / `remove()`: quita los préstamos ya pagados mientras recorre. Con for-each eso da error. |
+| **Sequenced Collections** (12) | `MenuBancos.verMovimientos()` → `movimientos.getLast()` | Java 21: obtiene el último elemento sin calcular `size() - 1`. |
+| **Clase genérica** (13) | `util/Paginador<T>` | Divide cualquier lista en páginas de 5. Se usa con movimientos. |
+| **Interfaz genérica** (13) | `interfaces/IDAO<T>` | `EmpresaDAO implements IDAO<Empresa>`: la `T` se vuelve `Empresa`. |
+| **Método genérico / restricción de tipos** (13) | `Consola.seleccionar(<T>)` y `Consola.mostrarLista(<T extends IConsultable>)` | `extends IConsultable` obliga a que la lista sea de objetos que tengan `resumen()`. |
+| **JDBC / base de datos** (14) | `conexion/Conexion` + paquete `dao` | Mismo esquema que el `Consumidor` del profesor: `prepareStatement`, `?`, `setString`, `executeUpdate`, `executeQuery`, `ResultSet`. |
+| **CRUD** (14) | `PresupuestoDAO`: `insertar`, `listar`/`buscar`, `actualizar`, `eliminar` | En el menú: opciones 3, 4, 5 y 7 de Gastos. |
+| **Lambdas y Stream API** (rúbrica) | `MenuIngresos.resumenAhorro()`, `MenuGastos.calcularGastado()`, `MenuBancos.listarPrestamos()` | `filter` (quedarse con algunos), `mapToDouble` (tomar el monto), `sum` (sumar). `(a, b) -> ...` es una lambda que ordena. |
 
 ---
 
-## 4. Errores que tenía la versión anterior y se corrigieron
+## 4. La base de datos
 
-Basado en la revisión que compartió Eduardo:
-
-- Recuperar contraseña con un código fijo (`admin123`) igual para todos → ahora con **pregunta de seguridad**.
-- Préstamo que no cobraba intereses → corregido.
-- Se podía pagar un préstamo con la cuenta de otra persona → ahora solo con cuentas del deudor.
-- Pagos con fecha inválida que igual descontaban dinero → las fechas se validan siempre.
-- Consultar sueldos con un número fuera de rango cerraba el programa → `Consola.leerEntero` valida el rango.
-- Cerrar sesión terminaba el programa → ahora vuelve al menú de acceso.
-- Depósitos con fecha fija 01-01-2026 → ahora con la fecha real.
-- Límite de 500 movimientos → ahora `ArrayList`, sin límite.
-- Códigos de gastos repetidos → contador único en `Billetera`.
-- Cuentas, sueldos, presupuestos, categorías, RUC y DNI duplicados → se rechazan.
-- Se aceptaba `Infinity` como monto → se rechaza.
-- Errores de redondeo con `double` → redondeo a céntimos.
-- Pregunta/respuesta de seguridad vacías y fechas de nacimiento futuras → se validan.
-- Correos con subdominio (`@utp.edu.pe`) rechazados → expresión regular corregida.
-- Nombres que empezaban con "Sin" (ej. "Sinergia SAC") rechazados → corregido.
-- Métodos públicos que cambiaban el saldo sin dejar rastro (`ejecutar`, `setSaldoInicial`) → eliminados.
-- No había forma de ver el historial de una cuenta → nueva opción.
-- Los datos se perdían al cerrar → persistencia en archivo.
-
-### Lo que se dejó fuera a propósito (por si lo preguntan)
-
-- **Varios usuarios con datos separados:** el alcance del proyecto es la billetera de una persona; todos los usuarios ven la misma billetera.
-- **Contraseñas cifradas:** se guardan tal cual; cifrarlas (hash) queda fuera del alcance del curso.
-- **Base de datos (MySQL):** la rúbrica acepta "archivos planos para serialización"; se eligió eso por simplicidad. Si el profesor exige base de datos, solo hay que cambiar `ArchivoBilletera`.
-- **Varias monedas:** el profesor indicó trabajar con una sola.
+- Script: `WalletPro/sql/walletpro.sql`. Instalación y diccionario de datos: [BASE_DE_DATOS.md](BASE_DE_DATOS.md).
+- **Un DAO por tabla.** El menú nunca escribe SQL: le pide al DAO que guarde o traiga los datos.
+- **`?` y `PreparedStatement`**: los datos se pasan aparte del SQL. Así nadie puede "inyectar" SQL escribiendo cosas raras (inyección SQL).
+- **Duplicados**: no se revisan en Java. La base los rechaza con `PRIMARY KEY` y `UNIQUE` (DNI, RUC, sueldo del mismo mes, presupuesto repetido…), y `Conexion.mostrarError()` muestra "ya existe un registro con esos datos".
+- **Fechas**: en Java son texto `dd-mm-aaaa`. `CONVERT(DATE, ?, 105)` las convierte al guardar y `CONVERT(VARCHAR(10), fecha, 105)` al leer (105 es el código del formato dd-mm-aaaa).
+- **JOIN**: la tabla `gasto` solo guarda `id_categoria`. Para mostrar el nombre, el `SELECT` hace `JOIN categoria`.
+- **Una sola conexión** (`static` en `Conexion`): se abre la primera vez y la usan todos los DAO.
 
 ---
 
-## 5. Qué estudiar según el módulo
+## 5. Cada módulo
 
-**Todos:** `Main`, `Menu`, `MenuAcceso`, `MenuPrincipal`, `Billetera`, `Repositorio`, `Consola`, `Dinero`, `ArchivoBilletera`, `OperacionInvalidaException`, `Persona`, `Transaccion`.
+### Alumno 1: Ingresos y Ahorros (Susana) → `MenuIngresos`
+Empresa, Cargo, Empleado, Trabajo, Sueldo y sus DAO. Lo más importante: **`resumenAhorro()`**, con el stream que suma los sueldos y el `HashMap` de gastos por categoría. También `registrarSueldo()`, que puede depositar el sueldo en una cuenta.
 
-**Alumno 1 – Ingresos y Ahorros:** `MenuIngresos`, `Empresa`, `Cargo`, `Empleado`, `Trabajo`, `Sueldo`. Clave: el resumen de ahorro (ingresos − gastos del mes) y cómo `Billetera.totalIngresosDelMes()` usa un stream.
+### Alumno 2: Gastos y Presupuesto (Keyner) → `MenuGastos`
+CategoriaGasto, Gasto, Presupuesto y sus DAO. Lo más importante: **`revisarPresupuesto()`**:
+1. No hay presupuesto → solo avisa.
+2. Se llega al 80 % o más → **ALERTA**.
+3. Se pasa del límite → muestra cuánto se excede y pregunta si igual lo registra.
 
-**Alumno 2 – Gastos y Presupuesto:** `MenuGastos`, `CategoriaGasto`, `Gasto`, `Presupuesto`. Clave: `revisarPresupuesto()` (OK / ALERTA / EXCEDIDO), `Billetera.calcularGastado()` y el pago con cuenta o efectivo.
+¿Por qué no se prohíbe el gasto? Porque en la vida real el gasto ya ocurrió: la billetera debe registrarlo, pero dejando al usuario advertido. También: el CRUD completo de presupuesto y el `Comparator`.
 
-**Alumno 3 – Bancos y Préstamos:** `MenuBancos`, `Banco`, `CuentaBancaria`, `Movimiento`, `TipoPrestamo`, `Prestamo`, `OperacionFinanciera`. Clave: por qué el saldo no tiene setter, el historial de movimientos y el cálculo y pago de cuotas.
+### Alumno 3: Bancos y Préstamos (Carlos) → `MenuBancos`
+Banco, CuentaBancaria, Movimiento, TipoPrestamo, Prestamo y sus DAO. Lo más importante:
+- `cuenta.retirar()` devuelve `null` si no alcanza el saldo.
+- `cuentaDAO.guardarMovimiento()` guarda el saldo nuevo y el movimiento.
+- El cálculo del préstamo (interés simple): `Prestamo.calcularInteresTotal()`. Con S/ 1000 al 2 % en 6 cuotas, el interés es S/ 120, el total S/ 1120 y la cuota S/ 186.67.
+- El `Iterator` en `pagarCuota()` y el `Paginador` en `verMovimientos()`.
 
 ---
 
-## 6. Pendiente para el equipo
+## 6. Preguntas probables
 
-- **Actualizar el diagrama de clases (draw.io)** con las clases nuevas: `Billetera`, `Repositorio<T>`, `Menu` y sus submenús, `Consola`, `Dinero`, `ArchivoBilletera`, `DatosDePrueba`, `OperacionInvalidaException`. Recuerden **no** incluir `Main` en el diagrama (lo pidió el profesor) ni la clase `Moneda`.
-- La consigna pide que el proyecto se llame `TF_EquipoNN` (ej. `TF_Equipo05`). Confirmen el número y renombren la carpeta `WalletPro` y el `artifactId` del `pom.xml` antes de entregar.
+**¿Por qué no hay constructores con parámetros?** Por indicación del profesor. Los objetos se crean vacíos y se llenan con `registrar()` (teclado) o con setters (cuando los arma el DAO desde la base).
+
+**¿Qué es un DAO?** *Data Access Object*: la clase que habla con una tabla. Separa "qué hace el programa" (menús y modelo) de "cómo se guarda" (SQL). Si mañana cambiamos de base de datos, solo cambia el paquete `dao`.
+
+**¿Por qué el saldo de la cuenta no se cambia con un `setSaldo` desde el menú?** Porque todo cambio de dinero debe quedar en el historial. Por eso solo se cambia con `depositar()`/`retirar()`, que crean un `Movimiento`. `setSaldo` existe solo para que `CuentaDAO` cargue el saldo que viene de la base.
+
+**¿Qué pasa si el usuario escribe letras donde va un número?** `Integer.parseInt` lanza `NumberFormatException`, el `catch` muestra un mensaje y el `do-while` vuelve a preguntar.
+
+**¿Qué pasa si registro dos veces el mismo DNI?** SQL Server rechaza el `INSERT` por la `PRIMARY KEY`, Java recibe un `SQLException` con el código 2627 y muestra "ya existe".
+
+**¿Por qué `useDelimiter("\\R")`?** `next()` normalmente lee hasta el primer espacio ("Juan Carlos" → "Juan"). Si el separador es el salto de línea (`\\R`), `next()` lee la línea completa sin usar `nextLine()`.
+
+**¿Por qué no usaron records?** Un record siempre se crea con un constructor con parámetros (`new Punto(1, 2)`), y eso va contra la indicación del profesor.
+
+**¿Dónde quedó la serialización?** Ya no hace falta: los datos se guardan en SQL Server, que es lo que pidió el profesor.

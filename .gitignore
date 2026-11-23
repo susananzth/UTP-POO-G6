@@ -19,3 +19,6 @@ nb-configuration.xml
 *.pdf
 *.drawio.bkp
 ~$*
+
+# Notas personales (no se suben)
+PENDIENTES.md
