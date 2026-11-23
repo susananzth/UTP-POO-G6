@@ -4,15 +4,16 @@ Guía para dejar SQL Server listo y conectar el programa. Hay que hacerla **una 
 
 ## 1. Instalar
 
-1. **SQL Server 2022**, edición *Express* o *Developer* (las dos son gratis). Al instalar, elijan **Básica**.
-2. **SQL Server Management Studio (SSMS)**: es el programa para ver las tablas y ejecutar SQL.
+1. **SQL Server Express** (gratis): microsoft.com/es-es/sql-server/sql-server-downloads → Express → *Descargar ahora*. Al instalar, elijan **Básica**. Al final aparece el nombre de la instancia (normalmente `SQLEXPRESS`).
+2. **SQL Server Management Studio (SSMS)**: es el programa para ver las tablas y ejecutar SQL. **Ojo:** SSMS no es el servidor; hay que instalar los dos.
 
 ## 2. Activar el usuario y la contraseña de SQL Server ("autenticación mixta")
 
 La instalación básica solo deja entrar con el usuario de Windows. Java necesita entrar con usuario y clave:
 
-1. Abran SSMS y conéctense con *Windows Authentication*.
-   - Nombre del servidor: `localhost\SQLEXPRESS` si instalaron Express, o `localhost` si instalaron Developer.
+1. Abran SSMS y conéctense con *Autenticación de Windows* (no pide usuario ni clave).
+   - Nombre del servidor: `localhost\SQLEXPRESS` (Express) o `localhost` (Developer).
+   - Marquen **Certificado de servidor de confianza** (*Trust server certificate*).
 2. Clic derecho en el servidor (arriba a la izquierda) → **Properties** → **Security**.
 3. Marquen **SQL Server and Windows Authentication mode** → **OK**.
 4. Clic derecho en el servidor → **Restart** (para que tome el cambio).
@@ -21,7 +22,7 @@ La instalación básica solo deja entrar con el usuario de Windows. Java necesit
 
 Java se conecta por red (TCP/IP), y viene **apagado** por defecto:
 
-1. Abran **SQL Server Configuration Manager**. Si no aparece en el menú Inicio, presionen `Win + R` y escriban `SQLServerManager16.msc` (para SQL Server 2022).
+1. Abran **SQL Server Configuration Manager**. Si no aparece en el menú Inicio, presionen `Win + R` y escriban `SQLServerManager17.msc` (SQL Server 2025) o `SQLServerManager16.msc` (SQL Server 2022).
 2. **SQL Server Network Configuration** → **Protocols for SQLEXPRESS** (o *MSSQLSERVER*).
 3. Clic derecho en **TCP/IP** → **Enable**.
 4. Doble clic en **TCP/IP** → pestaña **IP Addresses** → bajen hasta **IPAll**:
@@ -47,6 +48,7 @@ El script crea la base `WalletPro`, las 14 tablas, datos de prueba y el usuario 
 | Mensaje | Solución |
 |---|---|
 | `No se pudo realizar la conexión TCP/IP al host localhost, puerto 1433` | SQL Server está apagado o el TCP/IP no está activado (paso 3). |
+| En SSMS: `error 26` o `error 40` al conectar | El servidor no está instalado (solo SSMS) o el nombre del servidor es incorrecto. En `Win + R` → `services.msc` debe aparecer **SQL Server (SQLEXPRESS)** en ejecución. |
 | `Login failed for user 'walletpro'` | Falta la autenticación mixta (paso 2) o no se ejecutó el script (paso 4). |
 | `Cannot open database "WalletPro"` | No se ejecutó el script (paso 4). |
 | `Falta el driver de SQL Server` | NetBeans no descargó el driver: clic derecho en el proyecto → **Build** con internet. |
