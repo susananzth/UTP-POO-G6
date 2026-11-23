@@ -1,6 +1,25 @@
 # Base de datos WalletPro (SQL Server)
 
-Guía para dejar SQL Server listo y conectar el programa. Hay que hacerla **una vez en cada computadora**.
+Guía para que **cada integrante** instale la base de datos en su propia computadora y pueda ejecutar el programa.
+
+**Cómo funciona en equipo:** el código se comparte por GitHub, pero la base de datos **no**: cada uno tiene su propio SQL Server y su propia base `WalletPro`, creada con el mismo script (`TF_Equipo05/sql/walletpro.sql`). Por eso todos empiezan con los mismos datos de prueba, pero lo que registre uno no aparece en la computadora de los otros. Para la demostración, se usa la computadora de quien presente.
+
+## Lista rápida para cada integrante
+
+| Paso | Qué hacer | Se hace |
+|---|---|---|
+| 0 | Clonar o actualizar el repositorio | Cada vez que haya cambios |
+| 1 | Instalar SQL Server Express y SSMS | Una sola vez |
+| 2 | Activar la autenticación mixta | Una sola vez |
+| 3 | Activar TCP/IP en el puerto 1433 | Una sola vez |
+| 4 | Ejecutar el script `walletpro.sql` | La primera vez y cada vez que el script cambie |
+| 5 | Probar con NetBeans (F6) | Siempre que quieran |
+
+## 0. Obtener el proyecto
+
+- **Primera vez:** en NetBeans, **Team → Git → Clone…** con `https://github.com/susananzth/UTP-POO-G6.git`.
+- **Si ya lo tenían clonado:** clic derecho en el proyecto → **Git → Remote → Pull…** para traer los cambios.
+- El proyecto Java está en la carpeta **`TF_Equipo05`** y el script de la base en **`TF_Equipo05/sql/walletpro.sql`**.
 
 ## 1. Instalar
 
@@ -32,15 +51,20 @@ Java se conecta por red (TCP/IP), y viene **apagado** por defecto:
 
 ## 4. Crear la base de datos
 
-1. En SSMS: **File → Open → File…** → abran `WalletPro/sql/walletpro.sql`.
+1. En SSMS (conectados con *Autenticación de Windows*): **File → Open → File…** → abran `TF_Equipo05/sql/walletpro.sql` desde la carpeta donde clonaron el repositorio.
 2. Presionen **Execute** (F5). Al final debe mostrar la tabla `empleado` con 2 filas.
 
-El script crea la base `WalletPro`, las 14 tablas, datos de prueba y el usuario `walletpro` (clave `WalletPro2026`) con el que entra Java. **Si lo vuelven a ejecutar, borra todo y empieza de cero** con los datos de prueba.
+El script crea la base `WalletPro`, las 14 tablas, datos de prueba y el usuario `walletpro` (clave `WalletPro2026`) con el que entra Java. Como el usuario y la clave están en el script, **nadie tiene que cambiar `Conexion.java`**: es igual en las tres computadoras.
+
+**Volver a ejecutarlo borra todo y empieza de cero** con los datos de prueba. Háganlo:
+
+- antes de grabar el video o de la sustentación, para mostrar datos limpios;
+- cuando traigan cambios del repositorio que modifiquen `walletpro.sql` (por ejemplo, una tabla nueva).
 
 ## 5. Probar
 
 1. *(Opcional)* En SSMS: **Connect** → *SQL Server Authentication* → usuario `walletpro`, clave `WalletPro2026`. Si entra, Java también podrá.
-2. En NetBeans: abran el proyecto `WalletPro` y presionen **F6**. Debe decir `Conectado a la base de datos WalletPro.`
+2. En NetBeans: abran el proyecto `TF_Equipo05` y presionen **F6**. Debe decir `Conectado a la base de datos WalletPro.`
 3. Entren con `Administrador` / `admin1234`.
 
 ## Errores comunes
@@ -76,4 +100,4 @@ El script crea la base `WalletPro`, las 14 tablas, datos de prueba y el usuario 
 | gasto | Gasto | id_gasto | dni → empleado, id_categoria → categoria, numero_cuenta → cuenta (NULL = efectivo) | monto > 0 |
 | presupuesto | Presupuesto | id_presupuesto | dni → empleado, id_categoria → categoria | UQ (dni, id_categoria, mes, anio) |
 
-Los tipos de cada columna están en `WalletPro/sql/walletpro.sql`. Para el **diagrama físico** que pide el informe: en SSMS, clic derecho en **Database Diagrams** → **New Database Diagram** → seleccionen todas las tablas.
+Los tipos de cada columna están en `TF_Equipo05/sql/walletpro.sql`. Para el **diagrama físico** que pide el informe: en SSMS, clic derecho en **Database Diagrams** → **New Database Diagram** → seleccionen todas las tablas.

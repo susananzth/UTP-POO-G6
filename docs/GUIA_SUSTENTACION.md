@@ -87,7 +87,7 @@ En NetBeans, **Ctrl + clic** sobre un método los lleva a donde está escrito, y
 
 ## 4. La base de datos
 
-- Script: `WalletPro/sql/walletpro.sql`. Instalación y diccionario de datos: [BASE_DE_DATOS.md](BASE_DE_DATOS.md).
+- Script: `TF_Equipo05/sql/walletpro.sql`. Instalación y diccionario de datos: [BASE_DE_DATOS.md](BASE_DE_DATOS.md).
 - **Un DAO por tabla.** El menú nunca escribe SQL: le pide al DAO que guarde o traiga los datos.
 - **`?` y `PreparedStatement`**: los datos se pasan aparte del SQL. Así nadie puede "inyectar" SQL escribiendo cosas raras (inyección SQL).
 - **Duplicados**: no se revisan en Java. La base los rechaza con `PRIMARY KEY` y `UNIQUE` (DNI, RUC, sueldo del mismo mes, presupuesto repetido…), y `Conexion.mostrarError()` muestra "ya existe un registro con esos datos".

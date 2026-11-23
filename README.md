@@ -12,8 +12,8 @@ Aplicación de consola en Java que registra los ingresos (sueldos), los gastos, 
 
 ## Cómo ejecutarlo
 
-1. Preparar SQL Server y crear la base con `WalletPro/sql/walletpro.sql`. Los pasos están en [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
-2. NetBeans → **File → Open Project…** → carpeta `WalletPro`. La primera vez descarga el driver de SQL Server (necesita internet).
+1. Preparar SQL Server y crear la base con `TF_Equipo05/sql/walletpro.sql`. Los pasos están en [docs/BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md).
+2. NetBeans → **File → Open Project…** → carpeta `TF_Equipo05`. La primera vez descarga el driver de SQL Server (necesita internet).
 3. **Run** (F6). La clase principal es `walletpro.Main`.
 4. Usuario de prueba: `Administrador` / `admin1234`.
 
@@ -22,7 +22,7 @@ Requiere **Java 21 o superior**.
 ## Estructura
 
 ```
-WalletPro/
+TF_Equipo05/
 ├── sql/walletpro.sql        Tablas, datos de prueba y usuario de la base
 └── src/main/java/walletpro/
     ├── Main.java            Punto de entrada
