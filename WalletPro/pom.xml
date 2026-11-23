@@ -11,8 +11,20 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>17</maven.compiler.release>
+        <!-- Java 21 o superior: se usan las Sequenced Collections (getLast) -->
+        <maven.compiler.release>21</maven.compiler.release>
         <!-- Clase que NetBeans ejecuta al presionar "Run Project" (F6) -->
         <exec.mainClass>walletpro.Main</exec.mainClass>
     </properties>
+
+    <dependencies>
+        <!-- Driver JDBC de SQL Server. NetBeans lo descarga solo la primera vez
+             que se compila (hace falta internet). Es el equivalente al
+             mysql-connector que uso el profesor en la semana 14. -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.8.1.jre11</version>
+        </dependency>
+    </dependencies>
 </project>

@@ -1,51 +1,30 @@
 package walletpro.modelo;
 
-import java.io.Serializable;
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.util.Consola;
 
 /**
- * Representa la entidad financiera. Se mantiene separada de
- * CuentaBancaria porque un mismo banco puede tener muchas cuentas
- * asociadas en el sistema (agregacion).
+ * Entidad financiera (Interbank, BCP...).
+ * Tabla: banco | DAO: BancoDAO | Menu: MenuBancos (Alumno 3)
  */
-public class Banco implements IValidable, Serializable {
+public class Banco {
 
-    private String codigoBanco;
-    private String nombreBanco;
+    private String codigo = "";
+    private String nombre = "";
 
-    public Banco() {
-        this.codigoBanco = "";
-        this.nombreBanco = "";
-    }
-
+    // Lo llama: MenuBancos.registrarBanco()
     public void registrar() {
-        this.codigoBanco = Consola.leerDigitos("Codigo del banco (5 digitos):", 5);
-        this.nombreBanco = Consola.leerTexto("Nombre del banco:");
+        codigo = Consola.leerDigitos("Codigo del banco (5 digitos):", 5);
+        nombre = Consola.leerTexto("Nombre del banco:");
     }
 
-    public String getCodigoBanco() { return codigoBanco; }
-    public String getNombreBanco() { return nombreBanco; }
+    public String getCodigo() { return codigo; }
+    public String getNombre() { return nombre; }
 
-    public void setCodigoBanco(String codigoBanco) {
-        if (ValidRegex.esSoloDigitos(codigoBanco, 5)) {
-            this.codigoBanco = codigoBanco;
-        }
-    }
-
-    public void setNombreBanco(String nombreBanco) {
-        if (ValidRegex.esTextoValido(nombreBanco)) {
-            this.nombreBanco = nombreBanco.trim();
-        }
-    }
-
-    @Override
-    public boolean validar() {
-        return ValidRegex.esSoloDigitos(codigoBanco, 5) && ValidRegex.esTextoValido(nombreBanco);
-    }
+    public void setCodigo(String codigo) { this.codigo = codigo; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
     @Override
     public String toString() {
-        return nombreBanco + " (codigo " + codigoBanco + ")";
+        return nombre + " (codigo " + codigo + ")";
     }
 }

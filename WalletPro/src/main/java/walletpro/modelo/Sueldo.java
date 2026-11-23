@@ -1,72 +1,48 @@
 package walletpro.modelo;
 
-import java.io.Serializable;
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.interfaces.IConsultable;
+import walletpro.util.Consola;
+import walletpro.util.Dinero;
 
 /**
- * ALUMNO 1 - Registrar Sueldo Mensual. El Empleado se asigna por
- * setter tras la seleccion en el menu (agregacion: Sueldo no es
- * dueno del Empleado).
+ * Sueldo que cobro un empleado en un mes.
+ * Tabla: sueldo | DAO: SueldoDAO | Menu: MenuIngresos (Alumno 1)
  */
-public class Sueldo implements IValidable, IConsultable, Serializable {
+public class Sueldo implements IConsultable {
 
+    private int idSueldo;
+    private Empleado empleado;
     private int mes;
     private int anio;
     private double monto;
-    private Empleado empleado;
 
-    public Sueldo() {
-        this.mes = 1;
-        this.anio = 2026;
-        this.monto = 0;
-        this.empleado = null;
-    }
-
+    // El empleado se elige antes en el menu (setEmpleado).
+    // Lo llama: MenuIngresos.registrarSueldo()
     public void registrar() {
-        this.mes = Consola.leerEntero("Mes (1-12):", 1, 12);
-        this.anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
-        this.monto = Consola.leerMonto("Monto del sueldo (S/):");
+        mes = Consola.leerEntero("Mes (1-12):", 1, 12);
+        anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
+        monto = Consola.leerMonto("Monto del sueldo (S/):");
     }
 
-    public int getMes() { return mes; }
-    public int getAnio() { return anio; }
-    public double getMonto() { return monto; }
-    public Empleado getEmpleado() { return empleado; }
-
-    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
-
-    public void setMes(int mes) {
-        if (mes >= 1 && mes <= 12) {
-            this.mes = mes;
-        }
-    }
-
-    public void setAnio(int anio) {
-        if (anio >= 2000 && anio <= 2100) {
-            this.anio = anio;
-        }
-    }
-
-    public void setMonto(double monto) {
-        if (monto > 0) {
-            this.monto = Dinero.redondear(monto);
-        }
-    }
-
-    /** Periodo en formato mm/aaaa, ej. 09/2026 */
+    // Ej. "09/2026"
     public String getPeriodo() {
         return String.format("%02d/%d", mes, anio);
     }
 
     @Override
-    public boolean validar() {
-        return monto > 0 && mes >= 1 && mes <= 12 && empleado != null;
+    public String resumen() {
+        return getPeriodo() + " | " + Dinero.formatear(monto);
     }
 
-    @Override
-    public String resumen() {
-        String nombreEmpleado = (empleado != null) ? empleado.getNombreCompleto() : "Sin empleado";
-        return String.format("%s | %-25s | %13s", getPeriodo(), nombreEmpleado, Dinero.formatear(monto));
-    }
+    public int getIdSueldo() { return idSueldo; }
+    public Empleado getEmpleado() { return empleado; }
+    public int getMes() { return mes; }
+    public int getAnio() { return anio; }
+    public double getMonto() { return monto; }
+
+    public void setIdSueldo(int idSueldo) { this.idSueldo = idSueldo; }
+    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
+    public void setMes(int mes) { this.mes = mes; }
+    public void setAnio(int anio) { this.anio = anio; }
+    public void setMonto(double monto) { this.monto = monto; }
 }

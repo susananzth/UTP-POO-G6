@@ -1,54 +1,46 @@
 package walletpro.modelo;
 
-import java.io.Serializable;
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.interfaces.IConsultable;
+import walletpro.util.Consola;
 
 /**
- * Clase abstracta que representa a toda persona del sistema.
- * Usuario y Empleado heredan de aqui porque ambos "son una" persona,
- * pero cada uno agrega un comportamiento distinto (credenciales de
- * acceso vs. datos laborales). No se instancia directamente.
- *
- * Siguiendo el estilo del curso: sin constructor con parametros,
- * registro interactivo por teclado (a traves de la clase Consola)
- * y setters que validan antes de asignar.
+ * CLASE ABSTRACTA con los datos comunes de toda persona.
+ * No se puede hacer new Persona(): solo sirve para heredar.
+ * Clases hijas (HERENCIA): Usuario y Empleado.
  */
-public abstract class Persona implements IValidable, IConsultable, Serializable {
+public abstract class Persona implements IConsultable {
 
+    // protected: las clases hijas pueden usarlos directamente
     protected String dni;
     protected String nombres;
     protected String apellidos;
-    protected String fechaNacimiento;
+    protected String fechaNacimiento;   // dd-mm-aaaa
     protected String correo;
 
+    // Constructor SIN parametros (regla del profesor): deja todo vacio.
     public Persona() {
-        this.dni = "";
-        this.nombres = "";
-        this.apellidos = "";
-        this.fechaNacimiento = "";
-        this.correo = "";
+        dni = "";
+        nombres = "";
+        apellidos = "";
+        fechaNacimiento = "";
+        correo = "";
     }
 
-    /**
-     * Lee los datos comunes a toda persona. Las subclases la llaman
-     * dentro de su propio registrar() antes de pedir sus campos
-     * especificos (credenciales o datos laborales).
-     */
+    // Pide por teclado los datos comunes.
+    // Lo llaman: Usuario.registrar() y Empleado.registrar()
     protected void registrarDatosPersonales() {
-        this.dni = Consola.leerDigitos("DNI (8 digitos):", 8);
-        this.nombres = Consola.leerTexto("Nombres:");
-        this.apellidos = Consola.leerTexto("Apellidos:");
-        this.fechaNacimiento = Consola.leerFechaPasada("Fecha de nacimiento (dd-mm-aaaa):");
+        dni = Consola.leerDigitos("DNI (8 digitos):", 8);
+        nombres = Consola.leerTexto("Nombres:");
+        apellidos = Consola.leerTexto("Apellidos:");
+        fechaNacimiento = Consola.leerFechaPasada("Fecha de nacimiento (dd-mm-aaaa):");
+        correo = Consola.leerCorreo("Correo:");
+    }
 
-        String entrada;
-        do {
-            entrada = Consola.leerTexto("Correo:");
-            if (!ValidRegex.esCorreoValido(entrada)) {
-                System.out.println("Correo invalido. Ejemplo: nombre@correo.com");
-            }
-        } while (!ValidRegex.esCorreoValido(entrada));
-        this.correo = entrada;
+    // METODO ABSTRACTO: cada hija responde distinto (POLIMORFISMO).
+    public abstract String getRol();
+
+    public String getNombreCompleto() {
+        return nombres + " " + apellidos;
     }
 
     public String getDni() { return dni; }
@@ -57,61 +49,14 @@ public abstract class Persona implements IValidable, IConsultable, Serializable 
     public String getFechaNacimiento() { return fechaNacimiento; }
     public String getCorreo() { return correo; }
 
-    public void setDni(String dni) {
-        if (ValidRegex.esSoloDigitos(dni, 8)) {
-            this.dni = dni;
-        }
-    }
+    // Los setters los usan los DAO al leer de la base de datos.
+    public void setDni(String dni) { this.dni = dni; }
+    public void setNombres(String nombres) { this.nombres = nombres; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
+    public void setFechaNacimiento(String fechaNacimiento) { this.fechaNacimiento = fechaNacimiento; }
+    public void setCorreo(String correo) { this.correo = correo; }
 
-    public void setNombres(String nombres) {
-        if (ValidRegex.esTextoValido(nombres)) {
-            this.nombres = nombres.trim();
-        }
-    }
-
-    public void setApellidos(String apellidos) {
-        if (ValidRegex.esTextoValido(apellidos)) {
-            this.apellidos = apellidos.trim();
-        }
-    }
-
-    public void setFechaNacimiento(String fechaNacimiento) {
-        if (ValidFecha.validar(fechaNacimiento) && !ValidFecha.esFutura(fechaNacimiento)) {
-            this.fechaNacimiento = fechaNacimiento;
-        }
-    }
-
-    public void setCorreo(String correo) {
-        if (ValidRegex.esCorreoValido(correo)) {
-            this.correo = correo;
-        }
-    }
-
-    public String getNombreCompleto() {
-        return nombres + " " + apellidos;
-    }
-
-    @Override
-    public boolean validar() {
-        return ValidRegex.esSoloDigitos(dni, 8)
-                && ValidRegex.esTextoValido(nombres)
-                && ValidRegex.esTextoValido(apellidos)
-                && ValidRegex.esCorreoValido(correo);
-    }
-
-    @Override
-    public String resumen() {
-        String mensaje = "Datos de la persona";
-        mensaje += "\nNombre: " + getNombreCompleto();
-        mensaje += "\nDNI: " + dni;
-        mensaje += "\nNacimiento: " + fechaNacimiento;
-        mensaje += "\nCorreo: " + correo;
-        return mensaje;
-    }
-
-    /** Metodo abstracto: cada subclase define su propio rol en el sistema. */
-    public abstract String getRol();
-
+    // Como se ve la persona en las listas para elegir (Consola.seleccionar).
     @Override
     public String toString() {
         return getNombreCompleto() + " (DNI " + dni + ")";

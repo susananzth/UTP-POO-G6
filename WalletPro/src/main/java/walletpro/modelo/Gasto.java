@@ -1,80 +1,54 @@
 package walletpro.modelo;
 
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.util.Consola;
 
 /**
- * ALUMNO 2 - Registrar Gasto. Hereda de Transaccion (fecha, monto,
- * descripcion) y agrega la categoria, la persona que gasta y si es
- * un gasto ocasional o fijo.
+ * Un gasto de un empleado. HEREDA de Transaccion (fecha, monto, descripcion).
+ * Tabla: gasto | DAO: GastoDAO | Menu: MenuGastos (Alumno 2)
  */
 public class Gasto extends Transaccion {
 
+    private Empleado empleado;
     private CategoriaGasto categoria;
     private boolean esOcasional;
-    private boolean montoVariable;
-    private Empleado persona;
-    /** Cuenta con la que se pago. Si es null, se pago en efectivo. */
-    private CuentaBancaria cuentaPago;
+    private String numeroCuentaPago;   // null = se pago en efectivo
 
-    public Gasto() {
-        super();
-        this.categoria = null;
-        this.esOcasional = false;
-        this.montoVariable = false;
-        this.persona = null;
-        this.cuentaPago = null;
+    // El empleado y la categoria se eligen antes en el menu (setters).
+    // Lo llama: MenuGastos.registrarGasto()
+    public void registrar() {
+        registrarDatosTransaccion();   // metodo heredado de Transaccion
+        esOcasional = Consola.leerSiNo("Es un gasto ocasional (no se repite cada mes)?");
     }
 
-    public void registrar(String idTransaccion) {
-        registrarDatosTransaccion(idTransaccion);
-        this.esOcasional = Consola.leerSiNo("Es un gasto ocasional (no se repite)?");
-        if (!esOcasional) {
-            this.montoVariable = Consola.leerSiNo("El monto cambia cada mes?");
-        }
-    }
-
-    public CategoriaGasto getCategoria() { return categoria; }
-    public boolean isEsOcasional() { return esOcasional; }
-    public boolean isMontoVariable() { return montoVariable; }
-    public Empleado getPersona() { return persona; }
-    public CuentaBancaria getCuentaPago() { return cuentaPago; }
-
-    public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
-    public void setPersona(Empleado persona) { this.persona = persona; }
-    public void setCuentaPago(CuentaBancaria cuentaPago) { this.cuentaPago = cuentaPago; }
-
-    public String getMedioPago() {
-        return (cuentaPago != null) ? "Cuenta " + cuentaPago.getNumeroCuenta() : "Efectivo";
-    }
-    public void setEsOcasional(boolean esOcasional) { this.esOcasional = esOcasional; }
-    public void setMontoVariable(boolean montoVariable) { this.montoVariable = montoVariable; }
-
-    /** Para precargar datos de prueba sin pasar por el teclado. */
-    public void fijarDatos(String idTransaccion, String fecha, double monto, String descripcion) {
-        fijarDatosTransaccion(idTransaccion, fecha, monto, descripcion);
-    }
-
+    // POLIMORFISMO: version de Gasto del metodo abstracto de Transaccion
     @Override
     public String getTipo() {
         if (esOcasional) {
             return "OCASIONAL";
         }
-        if (montoVariable) {
-            return "FIJO-VARIABLE";
-        }
         return "FIJO";
     }
 
-    @Override
-    public boolean validar() {
-        return super.validar() && categoria != null && persona != null;
+    public String getMedioPago() {
+        if (numeroCuentaPago == null) {
+            return "Efectivo";
+        }
+        return "Cuenta " + numeroCuentaPago;
     }
 
+    // SOBRESCRITURA: usa el resumen del padre (super) y le agrega datos.
     @Override
     public String resumen() {
-        String nombreCategoria = (categoria != null) ? categoria.getNombreCategoria() : "Sin categoria";
-        String nombrePersona = (persona != null) ? persona.getNombreCompleto() : "Sin persona";
-        return super.resumen() + " | " + nombreCategoria + " | " + nombrePersona + " | " + getMedioPago();
+        return super.resumen() + " | " + categoria.getNombre() + " | " + getMedioPago();
     }
+
+    public Empleado getEmpleado() { return empleado; }
+    public CategoriaGasto getCategoria() { return categoria; }
+    public boolean isEsOcasional() { return esOcasional; }
+    public String getNumeroCuentaPago() { return numeroCuentaPago; }
+
+    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
+    public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
+    public void setEsOcasional(boolean esOcasional) { this.esOcasional = esOcasional; }
+    public void setNumeroCuentaPago(String numeroCuentaPago) { this.numeroCuentaPago = numeroCuentaPago; }
 }

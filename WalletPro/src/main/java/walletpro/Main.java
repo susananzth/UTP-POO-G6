@@ -1,17 +1,14 @@
 package walletpro;
 
-import java.util.NoSuchElementException;
-import walletpro.datos.ArchivoBilletera;
-import walletpro.datos.DatosDePrueba;
-import walletpro.modelo.Billetera;
+import walletpro.conexion.Conexion;
 import walletpro.vista.MenuAcceso;
 
 /**
- * Punto de entrada de WalletPro.
+ * PUNTO DE ENTRADA del programa (NetBeans lo ejecuta con F6).
  *
- * Main ya no contiene la logica: solo prepara la billetera (la lee del
- * archivo o carga datos de prueba la primera vez) y abre el menu de
- * acceso. Cada modulo tiene su propio menu en el paquete vista.
+ * Recorrido del programa:
+ *   Main -> MenuAcceso (login) -> MenuPrincipal -> MenuIngresos / MenuGastos / MenuBancos
+ *   Cada menu usa las clases del paquete modelo (datos) y del paquete dao (base de datos).
  */
 public class Main {
 
@@ -20,28 +17,20 @@ public class Main {
         mensaje += "\n        WALLET PRO - BIENVENIDO       ";
         mensaje += "\n  Billetera personal (moneda: soles)  ";
         mensaje += "\n======================================";
-
-        Billetera billetera = ArchivoBilletera.cargar();
-        if (billetera == null) {
-            billetera = new Billetera();
-            DatosDePrueba.cargar(billetera);
-            ArchivoBilletera.guardar(billetera);
-            mensaje += "\nPrimera ejecucion: se cargaron datos de prueba.";
-            mensaje += "\nUsuario: Administrador | Contrasena: admin1234";
-        } else {
-            mensaje += "\nDatos cargados desde " + ArchivoBilletera.NOMBRE_ARCHIVO + ".";
-        }
         System.out.println(mensaje);
 
-        MenuAcceso menuAcceso = new MenuAcceso(billetera);
-        try {
-            menuAcceso.mostrar();
-        } catch (NoSuchElementException e) {
-            // Pasa si se cierra la entrada del teclado (por ejemplo, Ctrl+Z / Ctrl+D).
-            System.out.println("\nSe cerro la entrada de datos. El programa terminara.");
+        // Sin base de datos el programa no puede funcionar: se prueba la conexion primero.
+        if (Conexion.getConexion() == null) {
+            System.out.println("Revise que SQL Server este encendido y que haya ejecutado sql/walletpro.sql.");
+            System.out.println("Los pasos estan en docs/BASE_DE_DATOS.md");
+            return;
         }
+        System.out.println("Conectado a la base de datos WalletPro.");
 
-        ArchivoBilletera.guardar(billetera);
-        System.out.println("Datos guardados. Gracias por usar Wallet Pro.");
+        MenuAcceso menuAcceso = new MenuAcceso();
+        menuAcceso.mostrar();
+
+        Conexion.cerrar();
+        System.out.println("Gracias por usar Wallet Pro.");
     }
 }

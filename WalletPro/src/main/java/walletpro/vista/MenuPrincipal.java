@@ -1,45 +1,51 @@
 package walletpro.vista;
 
-import walletpro.modelo.Billetera;
 import walletpro.modelo.Usuario;
+import walletpro.util.Consola;
 
 /**
- * Menu principal: lleva a los tres modulos del sistema, uno por
- * integrante del equipo. Elegir 0 cierra la sesion y vuelve al menu
- * de acceso (no termina el programa).
+ * Menu principal: un modulo por integrante del equipo.
+ * Lo llama: MenuAcceso.iniciarSesion()
+ * Llama a: MenuIngresos (Alumno 1), MenuGastos (Alumno 2), MenuBancos (Alumno 3).
  */
-public class MenuPrincipal extends Menu {
+public class MenuPrincipal {
 
-    private Usuario usuarioActual;
+    private Usuario usuario;   // quien inicio sesion
 
-    public MenuPrincipal(Billetera billetera, Usuario usuarioActual) {
-        super("MENU PRINCIPAL", billetera);
-        this.usuarioActual = usuarioActual;
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
     }
 
-    @Override
-    protected String[] getOpciones() {
-        return new String[] {
-            "Ingresos y Ahorros (empresas, empleados, trabajos, sueldos)",
-            "Gastos y Presupuesto (categorias, gastos, presupuestos)",
-            "Bancos y Prestamos (cuentas, depositos, retiros, prestamos)"
-        };
-    }
+    public void mostrar() {
+        int opcion;
+        do {
+            String mensaje = "\n========== MENU PRINCIPAL ==========";
+            mensaje += "\nUsuario: " + usuario.getNombreUsuario() + " (" + usuario.getRol() + ")";
+            mensaje += "\n1. Ingresos y Ahorros (empresas, empleados, trabajos, sueldos)";
+            mensaje += "\n2. Gastos y Presupuesto (categorias, gastos, presupuestos)";
+            mensaje += "\n3. Bancos y Prestamos (cuentas, depositos, retiros, prestamos)";
+            mensaje += "\n4. Ver mis datos";
+            mensaje += "\n0. Cerrar sesion";
+            System.out.println(mensaje);
 
-    @Override
-    protected String getTextoSalida() {
-        return "Cerrar sesion (" + usuarioActual.getNombreUsuario() + ")";
-    }
-
-    @Override
-    protected void ejecutarOpcion(int opcion) {
-        Menu submenu = null;
-        switch (opcion) {
-            case 1: submenu = new MenuIngresos(billetera); break;
-            case 2: submenu = new MenuGastos(billetera); break;
-            case 3: submenu = new MenuBancos(billetera); break;
-        }
-        // Polimorfismo: la variable es de tipo Menu, pero se ejecuta el submenu elegido.
-        submenu.mostrar();
+            opcion = Consola.leerEntero("Seleccione una opcion:", 0, 4);
+            switch (opcion) {
+                case 1:
+                    MenuIngresos menuIngresos = new MenuIngresos();
+                    menuIngresos.mostrar();
+                    break;
+                case 2:
+                    MenuGastos menuGastos = new MenuGastos();
+                    menuGastos.mostrar();
+                    break;
+                case 3:
+                    MenuBancos menuBancos = new MenuBancos();
+                    menuBancos.mostrar();
+                    break;
+                case 4:
+                    System.out.println(usuario.resumen());
+                    break;
+            }
+        } while (opcion != 0);
     }
 }

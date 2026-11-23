@@ -1,173 +1,190 @@
 package walletpro.util;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Scanner;
+import walletpro.interfaces.IConsultable;
 
 /**
- * Centraliza TODA la lectura del teclado de la aplicacion.
+ * TODA la lectura del teclado esta aqui. Cada metodo repite la pregunta
+ * hasta que el dato sea valido.
+ * Ejemplo de uso: String nombre = Consola.leerTexto("Nombres:");
  *
- * Indicaciones del profesor que se aplican aqui:
- * - No se usa nextLine(): el Scanner se configura con useDelimiter("\\R")
- *   (\\R = salto de linea), asi next() devuelve la linea completa, incluso
- *   si tiene espacios ("Juan Carlos"), y se evita el clasico problema de
- *   mezclar nextInt() con nextLine().
- * - Los textos que se muestran al usuario usan println (no print).
- * - El Scanner NO se cierra (no hay teclado.close()): cerrarlo cerraria
- *   System.in y ya no se podria volver a leer en todo el programa.
+ * Reglas del profesor:
+ * - No se usa nextLine(): con useDelimiter("\\R") el metodo next() lee la
+ *   linea completa hasta el Enter (con espacios, ej. "Juan Carlos").
+ * - Los mensajes se muestran con println.
+ * - El Scanner nunca se cierra: cerrarlo cerraria System.in (el teclado).
  *
- * Antes cada clase repetia el mismo do-while + try-catch; ahora todas
- * llaman a estos metodos, asi la validacion es la misma en todo el sistema.
+ * Lo usan: las clases del modelo (en registrar()) y los menus.
  */
 public class Consola {
 
-    private static final Scanner teclado = new Scanner(System.in).useDelimiter("\\R");
+    // \\R significa "salto de linea": cada Enter separa un dato del siguiente
+    private static Scanner teclado = new Scanner(System.in).useDelimiter("\\R");
 
-    /** Monto maximo aceptado en una sola operacion (evita valores absurdos). */
-    public static final double MONTO_MAXIMO = 1000000000;
+    public static final double MONTO_MAXIMO = 1000000;
 
-    /** Lee un texto que no puede quedar vacio. */
-    public static String leerTexto(String mensaje) {
-        String entrada;
+    // Texto obligatorio (no puede quedar vacio).
+    public static String leerTexto(String pregunta) {
+        String texto;
         do {
-            System.out.println(mensaje);
-            entrada = teclado.next().trim();
-            if (entrada.isEmpty()) {
-                System.out.println("Este dato es obligatorio, no puede quedar vacio.");
+            System.out.println(pregunta);
+            texto = teclado.next().trim();
+            if (texto.isEmpty()) {
+                System.out.println("Este dato es obligatorio.");
             }
-        } while (entrada.isEmpty());
-        return entrada;
+        } while (texto.isEmpty());
+        return texto;
     }
 
-    /** Lee un texto opcional: si el usuario no escribe nada, devuelve el valor por defecto. */
-    public static String leerTextoOpcional(String mensaje, String porDefecto) {
-        System.out.println(mensaje);
-        String entrada = teclado.next().trim();
-        if (entrada.isEmpty()) {
+    // Texto opcional: si solo presiona Enter, devuelve el valor por defecto.
+    public static String leerTextoOpcional(String pregunta, String porDefecto) {
+        System.out.println(pregunta);
+        String texto = teclado.next().trim();
+        if (texto.isEmpty()) {
             return porDefecto;
         }
-        return entrada;
+        return texto;
     }
 
-    /** Lee un texto formado solo por digitos, con la cantidad exacta indicada (DNI, RUC...). */
-    public static String leerDigitos(String mensaje, int cantidad) {
-        String entrada;
+    // Solo digitos y con la cantidad exacta (DNI = 8, RUC = 11, codigo de banco = 5).
+    public static String leerDigitos(String pregunta, int cantidad) {
+        String texto;
         do {
-            entrada = leerTexto(mensaje);
-            if (!ValidRegex.esSoloDigitos(entrada, cantidad)) {
+            texto = leerTexto(pregunta);
+            if (!Validacion.esSoloDigitos(texto, cantidad)) {
                 System.out.println("Debe tener exactamente " + cantidad + " digitos.");
             }
-        } while (!ValidRegex.esSoloDigitos(entrada, cantidad));
-        return entrada;
+        } while (!Validacion.esSoloDigitos(texto, cantidad));
+        return texto;
     }
 
-    /** Lee un numero entero dentro del rango [minimo, maximo]. */
-    public static int leerEntero(String mensaje, int minimo, int maximo) {
+    public static String leerCorreo(String pregunta) {
+        String texto;
+        do {
+            texto = leerTexto(pregunta);
+            if (!Validacion.esCorreoValido(texto)) {
+                System.out.println("Correo invalido. Ejemplo: nombre@correo.com");
+            }
+        } while (!Validacion.esCorreoValido(texto));
+        return texto;
+    }
+
+    // Numero entero entre minimo y maximo.
+    // try-catch: si escribe letras, Integer.parseInt lanza NumberFormatException.
+    public static int leerEntero(String pregunta, int minimo, int maximo) {
         int valor = 0;
         boolean valido = false;
         do {
-            System.out.println(mensaje);
+            System.out.println(pregunta);
             try {
                 valor = Integer.parseInt(teclado.next().trim());
                 if (valor >= minimo && valor <= maximo) {
                     valido = true;
                 } else {
-                    System.out.println("El valor debe estar entre " + minimo + " y " + maximo + ".");
+                    System.out.println("Debe estar entre " + minimo + " y " + maximo + ".");
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero entero valido.");
+                System.out.println("Ingrese un numero entero.");
             }
         } while (!valido);
         return valor;
     }
 
-    /**
-     * Lee un decimal dentro del rango [minimo, maximo]. Se rechazan
-     * "Infinity" y "NaN", que Double.parseDouble acepta como numeros.
-     */
-    public static double leerDecimal(String mensaje, double minimo, double maximo) {
+    // Numero con decimales entre minimo y maximo (use punto: 10.50).
+    public static double leerDecimal(String pregunta, double minimo, double maximo) {
         double valor = 0;
         boolean valido = false;
         do {
-            System.out.println(mensaje);
+            System.out.println(pregunta);
             try {
                 valor = Double.parseDouble(teclado.next().trim());
-                if (Double.isNaN(valor) || Double.isInfinite(valor)) {
-                    System.out.println("Ingrese un numero valido.");
-                } else if (valor < minimo || valor > maximo) {
-                    System.out.println("El valor debe estar entre " + minimo + " y " + maximo + ".");
-                } else {
+                if (valor >= minimo && valor <= maximo) {
                     valido = true;
+                } else {
+                    System.out.println("Debe estar entre " + minimo + " y " + maximo + ".");
                 }
             } catch (NumberFormatException e) {
-                System.out.println("Ingrese un numero valido (use punto para los decimales).");
+                System.out.println("Ingrese un numero (use punto para los decimales).");
             }
         } while (!valido);
         return valor;
     }
 
-    /** Lee un monto de dinero en soles: mayor a 0 y redondeado a centimos. */
-    public static double leerMonto(String mensaje) {
+    // Monto en soles: mayor a 0 y redondeado a 2 decimales.
+    public static double leerMonto(String pregunta) {
         double monto;
         do {
-            monto = Dinero.redondear(leerDecimal(mensaje, 0, MONTO_MAXIMO));
+            monto = Dinero.redondear(leerDecimal(pregunta, 0, MONTO_MAXIMO));
             if (monto <= 0) {
-                System.out.println("El monto debe ser mayor a S/ 0.00");
+                System.out.println("El monto debe ser mayor a 0.");
             }
         } while (monto <= 0);
         return monto;
     }
 
-    /** Lee una fecha valida en formato dd-mm-aaaa. */
-    public static String leerFecha(String mensaje) {
-        String entrada;
+    // Fecha valida con formato dd-mm-aaaa.
+    public static String leerFecha(String pregunta) {
+        String texto;
         do {
-            entrada = leerTexto(mensaje);
-            if (!ValidFecha.validar(entrada)) {
-                System.out.println("Fecha invalida. Use el formato dd-mm-aaaa (ej. 05-11-2026).");
+            texto = leerTexto(pregunta);
+            if (!Validacion.esFechaValida(texto)) {
+                System.out.println("Fecha invalida. Use dd-mm-aaaa, ej. 05-11-2026.");
             }
-        } while (!ValidFecha.validar(entrada));
-        return entrada;
+        } while (!Validacion.esFechaValida(texto));
+        return texto;
     }
 
-    /** Lee una fecha que no puede ser posterior a hoy (nacimiento, ingreso a un trabajo...). */
-    public static String leerFechaPasada(String mensaje) {
-        String entrada;
+    // Fecha que no puede ser posterior a hoy (nacimiento, ingreso a un trabajo).
+    public static String leerFechaPasada(String pregunta) {
+        String texto;
         do {
-            entrada = leerFecha(mensaje);
-            if (ValidFecha.esFutura(entrada)) {
-                System.out.println("La fecha no puede ser posterior a hoy (" + ValidFecha.hoy() + ").");
+            texto = leerFecha(pregunta);
+            if (Validacion.esFechaFutura(texto)) {
+                System.out.println("La fecha no puede ser posterior a hoy.");
             }
-        } while (ValidFecha.esFutura(entrada));
-        return entrada;
+        } while (Validacion.esFechaFutura(texto));
+        return texto;
+    }
+
+    // Respuesta S o N. Devuelve true si responde S.
+    public static boolean leerSiNo(String pregunta) {
+        String texto;
+        do {
+            texto = leerTexto(pregunta + " (S/N)");
+        } while (!texto.equalsIgnoreCase("S") && !texto.equalsIgnoreCase("N"));
+        return texto.equalsIgnoreCase("S");
     }
 
     /**
-     * Metodo GENERICO <T>: sirve para elegir de cualquier lista (empleados,
-     * bancos, cuentas...). Muestra las opciones numeradas y devuelve el
-     * elemento elegido. Si la lista esta vacia devuelve null.
+     * METODO GENERICO <T>: sirve para elegir de cualquier lista
+     * (empleados, bancos, cuentas...). Muestra la lista numerada
+     * (usa el toString() de cada objeto) y devuelve el elegido.
+     * Ejemplo: Empleado e = Consola.seleccionar("Empleados:", empleados);
      */
-    public static <T> T seleccionar(String titulo, List<T> opciones) {
-        if (opciones.isEmpty()) {
-            return null;
-        }
+    public static <T> T seleccionar(String titulo, ArrayList<T> lista) {
         String mensaje = titulo;
-        for (int i = 0; i < opciones.size(); i++) {
-            mensaje += "\n" + (i + 1) + ". " + opciones.get(i);
+        for (int i = 0; i < lista.size(); i++) {
+            mensaje += "\n" + (i + 1) + ". " + lista.get(i);
         }
         System.out.println(mensaje);
-        int posicion = leerEntero("Seleccione una opcion (1-" + opciones.size() + "):", 1, opciones.size());
-        return opciones.get(posicion - 1);
+        int posicion = leerEntero("Seleccione una opcion (1-" + lista.size() + "):", 1, lista.size());
+        return lista.get(posicion - 1);
     }
 
-    /** Lee una respuesta S/N y la devuelve como boolean. */
-    public static boolean leerSiNo(String mensaje) {
-        String entrada;
-        do {
-            entrada = leerTexto(mensaje + " (S/N)");
-            if (!entrada.equalsIgnoreCase("S") && !entrada.equalsIgnoreCase("N")) {
-                System.out.println("Responda con S o N.");
-            }
-        } while (!entrada.equalsIgnoreCase("S") && !entrada.equalsIgnoreCase("N"));
-        return entrada.equalsIgnoreCase("S");
+    /**
+     * GENERICO CON RESTRICCION <T extends IConsultable>: solo acepta listas
+     * de clases que implementan IConsultable, porque necesita llamar a
+     * resumen(). Cada clase tiene su propio resumen() (polimorfismo).
+     */
+    public static <T extends IConsultable> void mostrarLista(String titulo, ArrayList<T> lista) {
+        String mensaje = titulo;
+        if (lista.isEmpty()) {
+            mensaje += "\n(no hay registros)";
+        }
+        for (T elemento : lista) {
+            mensaje += "\n" + elemento.resumen();
+        }
+        System.out.println(mensaje);
     }
 }

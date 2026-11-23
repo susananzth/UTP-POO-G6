@@ -1,57 +1,33 @@
 package walletpro.modelo;
 
-import java.io.Serializable;
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.util.Consola;
 
 /**
- * Agrupa los gastos (Alimentacion, Transporte, Salud...). Los
- * presupuestos se definen por categoria.
+ * Grupo de gastos (Alimentacion, Transporte...). Los presupuestos son por categoria.
+ * Tabla: categoria | DAO: CategoriaDAO | Menu: MenuGastos (Alumno 2)
  */
-public class CategoriaGasto implements IValidable, Serializable {
+public class CategoriaGasto {
 
-    private String nombreCategoria;
-    private String descripcion;
-    private boolean esFija;
+    private int idCategoria;
+    private String nombre = "";
+    private String descripcion = "";
 
-    public CategoriaGasto() {
-        this.nombreCategoria = "";
-        this.descripcion = "Sin descripcion";
-        this.esFija = false;
-    }
-
+    // Lo llama: MenuGastos.registrarCategoria()
     public void registrar() {
-        this.nombreCategoria = Consola.leerTexto("Nombre de la categoria:");
-        this.descripcion = Consola.leerTextoOpcional("Descripcion (opcional, Enter para omitir):", "Sin descripcion");
-        this.esFija = Consola.leerSiNo("Es un gasto fijo (se repite cada mes)?");
+        nombre = Consola.leerTexto("Nombre de la categoria:");
+        descripcion = Consola.leerTextoOpcional("Descripcion (Enter para omitir):", "Sin descripcion");
     }
 
-    public String getNombreCategoria() { return nombreCategoria; }
+    public int getIdCategoria() { return idCategoria; }
+    public String getNombre() { return nombre; }
     public String getDescripcion() { return descripcion; }
-    public boolean isEsFija() { return esFija; }
 
-    public void setNombreCategoria(String nombreCategoria) {
-        if (ValidRegex.esTextoValido(nombreCategoria)) {
-            this.nombreCategoria = nombreCategoria.trim();
-        }
-    }
-
-    public void setDescripcion(String descripcion) {
-        if (ValidRegex.esTextoValido(descripcion)) {
-            this.descripcion = descripcion.trim();
-        }
-    }
-
-    public void setEsFija(boolean esFija) { this.esFija = esFija; }
-
-    @Override
-    public boolean validar() {
-        return ValidRegex.esTextoValido(nombreCategoria);
-    }
+    public void setIdCategoria(int idCategoria) { this.idCategoria = idCategoria; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
     @Override
     public String toString() {
-        String tipo = esFija ? "Fija" : "Variable";
-        return nombreCategoria + " (" + tipo + ")";
+        return nombre;
     }
 }

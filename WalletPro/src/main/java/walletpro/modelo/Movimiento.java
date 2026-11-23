@@ -1,53 +1,39 @@
 package walletpro.modelo;
 
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.util.Dinero;
 
 /**
- * Cada deposito, retiro o pago dentro de una CuentaBancaria. Hereda
- * de Transaccion; CuentaBancaria es duena de sus movimientos
- * (composicion): un movimiento no existe fuera de la cuenta donde
- * ocurrio. Lo crea siempre la cuenta, nunca el usuario directamente.
+ * Deposito o retiro en una cuenta. HEREDA de Transaccion.
+ * No se pide por teclado: lo crea CuentaBancaria en depositar() o retirar().
+ * Tabla: movimiento | Se guarda con: CuentaDAO.guardarMovimiento()
  */
 public class Movimiento extends Transaccion {
 
     public static final String DEPOSITO = "DEPOSITO";
     public static final String RETIRO = "RETIRO";
 
-    private String tipoMovimiento;
-    private double saldoResultante;
+    private String numeroCuenta = "";
+    private String tipo = DEPOSITO;
+    private double saldoResultante;   // como quedo el saldo despues del movimiento
 
-    public Movimiento() {
-        super();
-        this.tipoMovimiento = DEPOSITO;
-        this.saldoResultante = 0;
-    }
-
-    /** Usado por CuentaBancaria al registrar un movimiento ya validado. */
-    public void completar(String idTransaccion, String descripcion, double monto,
-                          String tipoMovimiento, double saldoResultante) {
-        fijarDatosTransaccion(idTransaccion, ValidFecha.hoy(), monto, descripcion);
-        this.tipoMovimiento = RETIRO.equals(tipoMovimiento) ? RETIRO : DEPOSITO;
-        this.saldoResultante = saldoResultante;
-    }
-
-    public String getTipoMovimiento() { return tipoMovimiento; }
-    public double getSaldoResultante() { return saldoResultante; }
-
-    public boolean esIngreso() {
-        return tipoMovimiento.equals(DEPOSITO);
-    }
-
+    // POLIMORFISMO: version de Movimiento del metodo abstracto de Transaccion
     @Override
     public String getTipo() {
-        return tipoMovimiento;
+        return tipo;
     }
 
+    // SOBRESCRITURA: muestra + o - y el saldo que quedo.
     @Override
     public String resumen() {
-        String signo = esIngreso() ? "+" : "-";
-        return String.format("%-6s | %s | %-8s | %14s | Saldo: %13s | %s",
-                idTransaccion, fecha, tipoMovimiento, signo + Dinero.formatear(monto),
-                Dinero.formatear(saldoResultante), descripcion);
+        String signo = tipo.equals(DEPOSITO) ? "+" : "-";
+        return fecha + " | " + tipo + " | " + signo + Dinero.formatear(monto)
+                + " | Saldo: " + Dinero.formatear(saldoResultante) + " | " + descripcion;
     }
+
+    public String getNumeroCuenta() { return numeroCuenta; }
+    public double getSaldoResultante() { return saldoResultante; }
+
+    public void setNumeroCuenta(String numeroCuenta) { this.numeroCuenta = numeroCuenta; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+    public void setSaldoResultante(double saldoResultante) { this.saldoResultante = saldoResultante; }
 }

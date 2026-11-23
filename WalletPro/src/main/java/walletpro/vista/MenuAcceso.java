@@ -1,98 +1,107 @@
 package walletpro.vista;
 
-import walletpro.excepciones.OperacionInvalidaException;
-import walletpro.modelo.Billetera;
+import walletpro.dao.UsuarioDAO;
 import walletpro.modelo.Usuario;
-import walletpro.servicio.Login;
-import walletpro.servicio.RecuperarContrasena;
-import walletpro.servicio.RegistrarUsuario;
 import walletpro.util.Consola;
+import walletpro.util.Validacion;
 
 /**
- * Menu de acceso: es la puerta de entrada al sistema (login
- * obligatorio). Al cerrar sesion en el menu principal se vuelve aqui,
- * y el programa termina solo cuando el usuario elige "Salir".
+ * Primer menu: iniciar sesion, registrarse o recuperar la contrasena.
+ * Lo llama: Main.main()
+ * Llama a: MenuPrincipal (cuando el login es correcto) y UsuarioDAO (tabla usuario).
  */
-public class MenuAcceso extends Menu {
+public class MenuAcceso {
 
-    public MenuAcceso(Billetera billetera) {
-        super("WALLET PRO - ACCESO", billetera);
+    private static final int MAXIMO_INTENTOS = 3;
+
+    private UsuarioDAO usuarioDAO = new UsuarioDAO();
+
+    public void mostrar() {
+        int opcion;
+        do {
+            String mensaje = "\n========== WALLET PRO - ACCESO ==========";
+            mensaje += "\n1. Iniciar sesion";
+            mensaje += "\n2. Registrar usuario";
+            mensaje += "\n3. Recuperar contrasena";
+            mensaje += "\n0. Salir del sistema";
+            System.out.println(mensaje);
+
+            opcion = Consola.leerEntero("Seleccione una opcion:", 0, 3);
+            switch (opcion) {
+                case 1:
+                    iniciarSesion();
+                    break;
+                case 2:
+                    registrarUsuario();
+                    break;
+                case 3:
+                    recuperarContrasena();
+                    break;
+            }
+        } while (opcion != 0);
     }
 
-    @Override
-    protected String[] getOpciones() {
-        return new String[] {
-            "Iniciar sesion",
-            "Registrar usuario",
-            "Recuperar contrasena"
-        };
-    }
-
-    @Override
-    protected String getTextoSalida() {
-        return "Salir del sistema";
-    }
-
-    @Override
-    protected void ejecutarOpcion(int opcion) {
-        switch (opcion) {
-            case 1: iniciarSesion(); break;
-            case 2: registrarUsuario(); break;
-            case 3: recuperarContrasena(); break;
-        }
-    }
-
+    // Hasta 3 intentos. Si entra, abre el menu principal.
     private void iniciarSesion() {
-        Login login = new Login();
         Usuario usuario = null;
         int intentos = 0;
-        while (usuario == null && intentos < Login.MAXIMO_INTENTOS) {
+        while (usuario == null && intentos < MAXIMO_INTENTOS) {
             String nombreUsuario = Consola.leerTexto("Nombre de usuario:");
-            String contrasena = Consola.leerTexto("Contrasena:");
-            usuario = login.iniciarSesion(billetera.getUsuarios(), nombreUsuario, contrasena);
+            String clave = Consola.leerTexto("Contrasena:");
             intentos++;
-            if (usuario == null) {
-                System.out.println("Credenciales incorrectas. Intento " + intentos + " de " + Login.MAXIMO_INTENTOS + ".");
+
+            Usuario encontrado = usuarioDAO.buscarPorNombreUsuario(nombreUsuario);
+            if (encontrado != null && encontrado.validarContrasena(clave)) {
+                usuario = encontrado;
+            } else {
+                System.out.println("Usuario o contrasena incorrectos. Intento " + intentos + " de " + MAXIMO_INTENTOS + ".");
             }
         }
         if (usuario == null) {
-            System.out.println("Demasiados intentos fallidos. Puede recuperar su contrasena desde el menu.");
+            System.out.println("Demasiados intentos. Puede recuperar su contrasena (opcion 3).");
             return;
         }
+
         System.out.println("Bienvenido/a, " + usuario.getNombres() + ".");
-        MenuPrincipal menuPrincipal = new MenuPrincipal(billetera, usuario);
+        MenuPrincipal menuPrincipal = new MenuPrincipal();
+        menuPrincipal.setUsuario(usuario);   // setter en lugar de constructor con parametros
         menuPrincipal.mostrar();
-        System.out.println("Sesion cerrada. Hasta pronto, " + usuario.getNombres() + ".");
+        System.out.println("Sesion cerrada.");
     }
 
     private void registrarUsuario() {
         System.out.println("\n--- REGISTRAR USUARIO ---");
-        try {
-            RegistrarUsuario registro = new RegistrarUsuario();
-            Usuario nuevo = registro.registrar(billetera);
-            System.out.println("Usuario registrado con exito. Ya puede iniciar sesion como " + nuevo.getNombreUsuario() + ".");
-        } catch (OperacionInvalidaException e) {
-            System.out.println("No se pudo registrar: " + e.getMessage());
+        Usuario usuario = new Usuario();
+        usuario.registrar();                 // pide los datos por teclado
+        if (usuarioDAO.insertar(usuario)) {  // INSERT en la tabla usuario
+            System.out.println("Usuario registrado. Ya puede iniciar sesion como " + usuario.getNombreUsuario() + ".");
         }
     }
 
     private void recuperarContrasena() {
         System.out.println("\n--- RECUPERAR CONTRASENA ---");
-        RecuperarContrasena recuperar = new RecuperarContrasena();
         String nombreUsuario = Consola.leerTexto("Nombre de usuario:");
-        Usuario usuario = recuperar.buscarUsuario(billetera.getUsuarios(), nombreUsuario);
+        Usuario usuario = usuarioDAO.buscarPorNombreUsuario(nombreUsuario);
         if (usuario == null) {
-            System.out.println("No existe una cuenta con ese nombre de usuario.");
+            System.out.println("No existe ese usuario.");
             return;
         }
+
         System.out.println("Pregunta de seguridad: " + usuario.getPreguntaSeguridad());
         String respuesta = Consola.leerTexto("Respuesta:");
+        if (!usuario.validarRespuesta(respuesta)) {
+            System.out.println("Respuesta incorrecta.");
+            return;
+        }
+
         String nueva = Consola.leerTexto("Nueva contrasena (minimo 8 caracteres, con letras y numeros):");
-        try {
-            recuperar.restablecerContrasena(usuario, respuesta, nueva);
-            System.out.println("Contrasena actualizada con exito.");
-        } catch (OperacionInvalidaException e) {
-            System.out.println("No se pudo cambiar la contrasena: " + e.getMessage());
+        if (!Validacion.esContrasenaValida(nueva)) {
+            System.out.println("La contrasena no cumple los requisitos. No se cambio.");
+            return;
+        }
+        usuario.setContrasena(nueva);
+        if (usuarioDAO.actualizarContrasena(usuario)) {   // UPDATE en la tabla usuario
+            System.out.println("Contrasena actualizada.");
         }
     }
 }

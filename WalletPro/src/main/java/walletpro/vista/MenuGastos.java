@@ -1,231 +1,261 @@
 package walletpro.vista;
 
-import java.util.List;
-import walletpro.excepciones.OperacionInvalidaException;
-import walletpro.modelo.*;
+import java.util.ArrayList;
+import walletpro.dao.CategoriaDAO;
+import walletpro.dao.CuentaDAO;
+import walletpro.dao.EmpleadoDAO;
+import walletpro.dao.GastoDAO;
+import walletpro.dao.PresupuestoDAO;
+import walletpro.modelo.CategoriaGasto;
+import walletpro.modelo.CuentaBancaria;
+import walletpro.modelo.Empleado;
+import walletpro.modelo.Gasto;
+import walletpro.modelo.Movimiento;
+import walletpro.modelo.Presupuesto;
+import walletpro.util.ComparadorGastoPorMonto;
 import walletpro.util.Consola;
 import walletpro.util.Dinero;
-import walletpro.util.ValidFecha;
+import walletpro.util.Validacion;
 
 /**
  * ALUMNO 2 - Modulo de Gastos y Presupuesto.
+ * Lo llama: MenuPrincipal (opcion 2).
  *
- * Control del presupuesto al registrar un gasto:
- *   - Si con el gasto se pasa el limite: se avisa cuanto se excede y
- *     se pregunta si igual se quiere registrar (en la vida real el gasto
- *     ya ocurrio, por eso no se prohibe, pero el usuario queda advertido).
- *   - Si con el gasto se llega al 80% o mas: se muestra una alerta.
- *   - Si no hay presupuesto para esa categoria y mes: se informa.
+ * Al registrar un gasto se revisa el presupuesto de esa categoria y mes:
+ *   - Si con el gasto se pasa del limite: avisa cuanto se excede y pregunta si igual lo registra.
+ *   - Si llega al 80% o mas: muestra una ALERTA.
+ *   - Si no hay presupuesto: solo avisa.
  */
-public class MenuGastos extends Menu {
+public class MenuGastos {
 
-    public MenuGastos(Billetera billetera) {
-        super("GASTOS Y PRESUPUESTO", billetera);
-    }
+    private EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private CategoriaDAO categoriaDAO = new CategoriaDAO();
+    private GastoDAO gastoDAO = new GastoDAO();
+    private PresupuestoDAO presupuestoDAO = new PresupuestoDAO();
+    private CuentaDAO cuentaDAO = new CuentaDAO();
 
-    @Override
-    protected String[] getOpciones() {
-        return new String[] {
-            "Registrar categoria de gasto",
-            "Registrar gasto",
-            "Registrar presupuesto mensual",
-            "Modificar monto de un presupuesto",
-            "Listar gastos de un mes",
-            "Consultar estado de presupuestos"
-        };
-    }
+    public void mostrar() {
+        int opcion;
+        do {
+            String mensaje = "\n========== GASTOS Y PRESUPUESTO ==========";
+            mensaje += "\n1. Registrar categoria de gasto";
+            mensaje += "\n2. Registrar gasto";
+            mensaje += "\n3. Registrar presupuesto mensual";
+            mensaje += "\n4. Modificar monto de un presupuesto";
+            mensaje += "\n5. Eliminar un presupuesto";
+            mensaje += "\n6. Listar gastos de un mes";
+            mensaje += "\n7. Estado de los presupuestos";
+            mensaje += "\n0. Volver";
+            System.out.println(mensaje);
 
-    @Override
-    protected void ejecutarOpcion(int opcion) {
-        switch (opcion) {
-            case 1: registrarCategoria(); break;
-            case 2: registrarGasto(); break;
-            case 3: registrarPresupuesto(); break;
-            case 4: modificarPresupuesto(); break;
-            case 5: listarGastosDelMes(); break;
-            case 6: consultarPresupuestos(); break;
-        }
+            opcion = Consola.leerEntero("Seleccione una opcion:", 0, 7);
+            switch (opcion) {
+                case 1: registrarCategoria(); break;
+                case 2: registrarGasto(); break;
+                case 3: registrarPresupuesto(); break;
+                case 4: modificarPresupuesto(); break;
+                case 5: eliminarPresupuesto(); break;
+                case 6: listarGastosDelMes(); break;
+                case 7: estadoPresupuestos(); break;
+            }
+        } while (opcion != 0);
     }
 
     private void registrarCategoria() {
-        System.out.println("\n--- REGISTRAR CATEGORIA DE GASTO ---");
+        System.out.println("\n--- REGISTRAR CATEGORIA ---");
         CategoriaGasto categoria = new CategoriaGasto();
         categoria.registrar();
-        try {
-            billetera.agregarCategoria(categoria);
+        if (categoriaDAO.insertar(categoria)) {
             System.out.println("Categoria registrada: " + categoria);
-        } catch (OperacionInvalidaException e) {
-            System.out.println("No se pudo registrar: " + e.getMessage());
         }
     }
 
     private void registrarGasto() {
         System.out.println("\n--- REGISTRAR GASTO ---");
-        if (billetera.getEmpleados().estaVacio() || billetera.getCategorias().estaVacio()) {
+        ArrayList<Empleado> empleados = empleadoDAO.listar();
+        ArrayList<CategoriaGasto> categorias = categoriaDAO.listar();
+        if (empleados.isEmpty() || categorias.isEmpty()) {
             System.out.println("Primero registre al menos un empleado y una categoria.");
             return;
         }
-        Empleado persona = Consola.seleccionar("Empleados:", billetera.getEmpleados().listar());
-        CategoriaGasto categoria = Consola.seleccionar("Categorias:", billetera.getCategorias().listar());
-
         Gasto gasto = new Gasto();
-        gasto.setPersona(persona);
-        gasto.setCategoria(categoria);
-        gasto.registrar(billetera.siguienteCodigoGasto());
+        gasto.setEmpleado(Consola.seleccionar("Empleados:", empleados));
+        gasto.setCategoria(Consola.seleccionar("Categorias:", categorias));
+        gasto.registrar();
 
+        // 1. Revisar el presupuesto. Si el usuario decide no seguir, se cancela.
         if (!revisarPresupuesto(gasto)) {
-            System.out.println("Gasto cancelado. No se registro nada.");
+            System.out.println("Gasto cancelado.");
             return;
         }
 
-        CuentaBancaria cuentaPago = elegirMedioDePago(persona);
-        try {
-            billetera.agregarGasto(gasto, cuentaPago);
-            String mensaje = "Gasto registrado:\n" + gasto.resumen();
-            if (cuentaPago != null) {
-                mensaje += "\nNuevo saldo de la cuenta " + cuentaPago.getNumeroCuenta() + ": "
-                        + Dinero.formatear(cuentaPago.getSaldo());
+        // 2. Medio de pago: efectivo o una cuenta del mismo empleado.
+        CuentaBancaria cuenta = null;
+        Movimiento movimiento = null;
+        ArrayList<CuentaBancaria> cuentas = cuentaDAO.listarDe(gasto.getEmpleado());
+        if (!cuentas.isEmpty() && Consola.leerSiNo("Pagar con una cuenta bancaria? (N = efectivo)")) {
+            cuenta = Consola.seleccionar("Cuentas:", cuentas);
+            movimiento = cuenta.retirar(gasto.getMonto(), "Gasto: " + gasto.getDescripcion());
+            if (movimiento == null) {
+                System.out.println("Saldo insuficiente (" + Dinero.formatear(cuenta.getSaldo()) + "). Gasto cancelado.");
+                return;
+            }
+            gasto.setNumeroCuentaPago(cuenta.getNumeroCuenta());
+        }
+
+        // 3. Guardar el gasto y, si se pago con cuenta, el nuevo saldo.
+        if (gastoDAO.insertar(gasto)) {
+            String mensaje = "Gasto registrado: " + gasto.resumen();
+            if (movimiento != null && cuentaDAO.guardarMovimiento(cuenta, movimiento)) {
+                mensaje += "\nNuevo saldo de la cuenta: " + Dinero.formatear(cuenta.getSaldo());
             }
             System.out.println(mensaje);
-        } catch (OperacionInvalidaException e) {
-            System.out.println("No se pudo registrar el gasto: " + e.getMessage());
         }
     }
 
-    /**
-     * Compara el gasto con el presupuesto de su categoria y mes.
-     * Devuelve false si el usuario decide cancelar el gasto.
-     */
+    // Compara el gasto con su presupuesto. Devuelve false si el usuario decide cancelar.
     private boolean revisarPresupuesto(Gasto gasto) {
-        int mes = ValidFecha.obtenerMes(gasto.getFecha());
-        int anio = ValidFecha.obtenerAnio(gasto.getFecha());
-        Presupuesto presupuesto = billetera.buscarPresupuesto(gasto.getPersona(), gasto.getCategoria(), mes, anio);
+        int mes = Validacion.mesDe(gasto.getFecha());
+        int anio = Validacion.anioDe(gasto.getFecha());
+        Presupuesto presupuesto = presupuestoDAO.buscar(gasto.getEmpleado(), gasto.getCategoria(), mes, anio);
         if (presupuesto == null) {
-            System.out.println("Aviso: no hay presupuesto de " + gasto.getCategoria().getNombreCategoria()
+            System.out.println("Aviso: no hay presupuesto de " + gasto.getCategoria().getNombre()
                     + " para " + String.format("%02d/%d", mes, anio) + ".");
             return true;
         }
 
-        double gastadoAntes = billetera.calcularGastado(presupuesto);
+        double gastadoAntes = calcularGastado(presupuesto);
         double gastadoDespues = Dinero.redondear(gastadoAntes + gasto.getMonto());
-        double limite = presupuesto.getMontoPresupuestado();
+        double limite = presupuesto.getMontoLimite();
 
         if (gastadoDespues > limite) {
-            String mensaje = "ATENCION: este gasto EXCEDE su presupuesto de "
-                    + presupuesto.getCategoria().getNombreCategoria() + " (" + presupuesto.getPeriodo() + ").";
+            String mensaje = "ATENCION: este gasto EXCEDE el presupuesto de " + gasto.getCategoria().getNombre();
             mensaje += "\n   Limite:              " + Dinero.formatear(limite);
             mensaje += "\n   Gastado hasta ahora: " + Dinero.formatear(gastadoAntes);
             mensaje += "\n   Con este gasto:      " + Dinero.formatear(gastadoDespues);
-            mensaje += "\n   Exceso:              " + Dinero.formatear(gastadoDespues - limite);
+            mensaje += "\n   Se excede en:        " + Dinero.formatear(gastadoDespues - limite);
             System.out.println(mensaje);
             return Consola.leerSiNo("Desea registrarlo de todos modos?");
         }
 
         double porcentaje = presupuesto.calcularPorcentajeUsado(gastadoDespues);
+        String disponible = Dinero.formatear(presupuesto.calcularDisponible(gastadoDespues));
         if (porcentaje >= Presupuesto.PORCENTAJE_ALERTA) {
-            System.out.printf("ALERTA: con este gasto habra usado el %.1f%% de su presupuesto. Le quedaran %s.%n",
-                    porcentaje, Dinero.formatear(presupuesto.calcularDisponible(gastadoDespues)));
+            System.out.printf("ALERTA: con este gasto usara el %.1f%% del presupuesto. Le quedaran %s.%n", porcentaje, disponible);
         } else {
-            System.out.printf("Presupuesto OK: habra usado el %.1f%%. Le quedaran %s.%n",
-                    porcentaje, Dinero.formatear(presupuesto.calcularDisponible(gastadoDespues)));
+            System.out.printf("Presupuesto OK: usara el %.1f%%. Le quedaran %s.%n", porcentaje, disponible);
         }
         return true;
     }
 
-    /** Devuelve la cuenta con la que se paga, o null si se paga en efectivo. */
-    private CuentaBancaria elegirMedioDePago(Empleado persona) {
-        List<CuentaBancaria> cuentas = billetera.cuentasDe(persona);
-        if (cuentas.isEmpty()) {
-            System.out.println("Medio de pago: Efectivo (" + persona.getNombres() + " no tiene cuentas registradas).");
-            return null;
-        }
-        System.out.println("Medio de pago:\n1. Efectivo\n2. Cuenta bancaria");
-        int opcion = Consola.leerEntero("Seleccione una opcion:", 1, 2);
-        if (opcion == 1) {
-            return null;
-        }
-        return Consola.seleccionar("Cuentas de " + persona.getNombreCompleto() + ":", cuentas);
+    // Suma lo gastado en la categoria y el mes de un presupuesto.
+    // STREAM: filter deja solo los gastos de esa categoria; mapToDouble + sum los suma.
+    private double calcularGastado(Presupuesto presupuesto) {
+        ArrayList<Gasto> gastos = gastoDAO.listarDelMes(presupuesto.getEmpleado(), presupuesto.getMes(), presupuesto.getAnio());
+        int idCategoria = presupuesto.getCategoria().getIdCategoria();
+        return gastos.stream()
+                .filter(g -> g.getCategoria().getIdCategoria() == idCategoria)
+                .mapToDouble(g -> g.getMonto())
+                .sum();
     }
 
+    // CREATE de presupuesto
     private void registrarPresupuesto() {
-        System.out.println("\n--- REGISTRAR PRESUPUESTO MENSUAL ---");
-        if (billetera.getEmpleados().estaVacio() || billetera.getCategorias().estaVacio()) {
+        System.out.println("\n--- REGISTRAR PRESUPUESTO ---");
+        ArrayList<Empleado> empleados = empleadoDAO.listar();
+        ArrayList<CategoriaGasto> categorias = categoriaDAO.listar();
+        if (empleados.isEmpty() || categorias.isEmpty()) {
             System.out.println("Primero registre al menos un empleado y una categoria.");
             return;
         }
         Presupuesto presupuesto = new Presupuesto();
-        presupuesto.setEmpleado(Consola.seleccionar("Empleados:", billetera.getEmpleados().listar()));
-        presupuesto.setCategoria(Consola.seleccionar("Categorias:", billetera.getCategorias().listar()));
+        presupuesto.setEmpleado(Consola.seleccionar("Empleados:", empleados));
+        presupuesto.setCategoria(Consola.seleccionar("Categorias:", categorias));
         presupuesto.registrar();
-        try {
-            billetera.agregarPresupuesto(presupuesto);
-            double gastado = billetera.calcularGastado(presupuesto);
-            System.out.println("Presupuesto registrado:\n" + presupuesto.resumen()
-                    + "\nYa gastado en ese mes: " + Dinero.formatear(gastado)
+        if (presupuestoDAO.insertar(presupuesto)) {
+            double gastado = calcularGastado(presupuesto);
+            System.out.println("Presupuesto registrado: " + presupuesto.resumen()
+                    + "\nYa gastado ese mes: " + Dinero.formatear(gastado)
                     + " | Estado: " + presupuesto.calcularEstado(gastado));
-        } catch (OperacionInvalidaException e) {
-            System.out.println("No se pudo registrar: " + e.getMessage());
         }
     }
 
+    // UPDATE de presupuesto
     private void modificarPresupuesto() {
         System.out.println("\n--- MODIFICAR PRESUPUESTO ---");
-        if (billetera.getPresupuestos().estaVacio()) {
-            System.out.println("No hay presupuestos registrados.");
+        Presupuesto presupuesto = elegirPresupuesto();
+        if (presupuesto == null) {
             return;
         }
-        Presupuesto presupuesto = Consola.seleccionar("Presupuestos:", billetera.getPresupuestos().listar());
-        presupuesto.setMontoPresupuestado(Consola.leerMonto("Nuevo monto maximo (S/):"));
-        double gastado = billetera.calcularGastado(presupuesto);
-        System.out.println("Presupuesto actualizado:\n" + presupuesto.resumen()
-                + "\nEstado: " + presupuesto.calcularEstado(gastado));
+        presupuesto.setMontoLimite(Consola.leerMonto("Nuevo monto maximo (S/):"));
+        if (presupuestoDAO.actualizar(presupuesto)) {
+            double gastado = calcularGastado(presupuesto);
+            System.out.println("Presupuesto actualizado: " + presupuesto.resumen()
+                    + "\nEstado: " + presupuesto.calcularEstado(gastado));
+        }
     }
 
+    // DELETE de presupuesto
+    private void eliminarPresupuesto() {
+        System.out.println("\n--- ELIMINAR PRESUPUESTO ---");
+        Presupuesto presupuesto = elegirPresupuesto();
+        if (presupuesto == null) {
+            return;
+        }
+        if (Consola.leerSiNo("Seguro que desea eliminar " + presupuesto.resumen() + "?")
+                && presupuestoDAO.eliminar(presupuesto)) {
+            System.out.println("Presupuesto eliminado.");
+        }
+    }
+
+    // Gastos del mes ordenados del mayor al menor monto (COMPARATOR, semana 12).
     private void listarGastosDelMes() {
         System.out.println("\n--- GASTOS DEL MES ---");
-        if (billetera.getEmpleados().estaVacio()) {
+        ArrayList<Empleado> empleados = empleadoDAO.listar();
+        if (empleados.isEmpty()) {
             System.out.println("No hay empleados registrados.");
             return;
         }
-        Empleado persona = Consola.seleccionar("Empleados:", billetera.getEmpleados().listar());
+        Empleado empleado = Consola.seleccionar("Empleados:", empleados);
         int mes = Consola.leerEntero("Mes (1-12):", 1, 12);
         int anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
 
-        List<Gasto> gastos = billetera.gastosDelMes(persona, mes, anio);
-        if (gastos.isEmpty()) {
-            System.out.println("No hay gastos de " + persona.getNombreCompleto()
-                    + " en " + String.format("%02d/%d", mes, anio) + ".");
-            return;
-        }
-        String mensaje = "Gastos de " + persona.getNombreCompleto() + " en " + String.format("%02d/%d", mes, anio) + ":";
-        double total = 0;
-        for (int i = 0; i < gastos.size(); i++) {
-            mensaje += "\n" + gastos.get(i).resumen();
-            total += gastos.get(i).getMonto();
-        }
-        mensaje += "\nTotal gastado: " + Dinero.formatear(total);
-        System.out.println(mensaje);
+        ArrayList<Gasto> gastos = gastoDAO.listarDelMes(empleado, mes, anio);
+        gastos.sort(new ComparadorGastoPorMonto());
+
+        String titulo = String.format("Gastos de %s en %02d/%d (de mayor a menor):", empleado.getNombreCompleto(), mes, anio);
+        Consola.mostrarLista(titulo, gastos);
+        double total = gastos.stream().mapToDouble(g -> g.getMonto()).sum();
+        System.out.println("Total gastado: " + Dinero.formatear(total));
     }
 
-    private void consultarPresupuestos() {
-        System.out.println("\n--- ESTADO DE PRESUPUESTOS ---");
-        List<Presupuesto> presupuestos = billetera.getPresupuestos().listar();
+    // READ: tabla con el estado de cada presupuesto.
+    private void estadoPresupuestos() {
+        System.out.println("\n--- ESTADO DE LOS PRESUPUESTOS ---");
+        ArrayList<Presupuesto> presupuestos = presupuestoDAO.listar();
         if (presupuestos.isEmpty()) {
             System.out.println("No hay presupuestos registrados.");
             return;
         }
-        String mensaje = String.format("%-7s | %-16s | %-20s | %13s | %13s | %14s | %6s | %s",
-                "Periodo", "Categoria", "Empleado", "Limite", "Gastado", "Disponible", "Uso", "Estado");
-        for (int i = 0; i < presupuestos.size(); i++) {
-            Presupuesto p = presupuestos.get(i);
-            double gastado = billetera.calcularGastado(p);
-            mensaje += String.format("%n%-7s | %-16s | %-20s | %13s | %13s | %14s | %5.1f%% | %s",
-                    p.getPeriodo(), p.getCategoria().getNombreCategoria(), p.getEmpleado().getNombreCompleto(),
-                    Dinero.formatear(p.getMontoPresupuestado()), Dinero.formatear(gastado),
-                    Dinero.formatear(p.calcularDisponible(gastado)), p.calcularPorcentajeUsado(gastado),
-                    p.calcularEstado(gastado));
+        String mensaje = "";
+        for (Presupuesto p : presupuestos) {
+            double gastado = calcularGastado(p);
+            mensaje += "\n" + p.resumen();
+            mensaje += String.format("\n   Gastado: %s | Disponible: %s | Uso: %.1f%% | %s",
+                    Dinero.formatear(gastado), Dinero.formatear(p.calcularDisponible(gastado)),
+                    p.calcularPorcentajeUsado(gastado), p.calcularEstado(gastado));
         }
-        mensaje += "\nOK = menos del 80% usado | ALERTA = 80% o mas | EXCEDIDO = se paso del limite";
+        mensaje += "\nOK = menos del 80% | ALERTA = 80% o mas | EXCEDIDO = se paso del limite";
         System.out.println(mensaje);
+    }
+
+    // Muestra los presupuestos y devuelve el elegido (null si no hay ninguno).
+    private Presupuesto elegirPresupuesto() {
+        ArrayList<Presupuesto> presupuestos = presupuestoDAO.listar();
+        if (presupuestos.isEmpty()) {
+            System.out.println("No hay presupuestos registrados.");
+            return null;
+        }
+        return Consola.seleccionar("Presupuestos:", presupuestos);
     }
 }

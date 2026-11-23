@@ -1,78 +1,48 @@
 package walletpro.modelo;
 
-import java.io.Serializable;
-import walletpro.interfaces.*;
-import walletpro.util.*;
+import walletpro.interfaces.IConsultable;
+import walletpro.util.Consola;
+import walletpro.util.Dinero;
 
 /**
- * ALUMNO 2 - Registrar Presupuesto: define un limite de gasto por
- * categoria y por mes para un empleado. CategoriaGasto y Empleado se
- * asignan por setter tras la seleccion en el menu (agregacion).
+ * Limite de gasto de un empleado, para una categoria, en un mes.
+ * Tabla: presupuesto | DAO: PresupuestoDAO | Menu: MenuGastos (Alumno 2)
+ *
+ * Lo "gastado" no se guarda aqui: el menu lo calcula sumando los gastos
+ * del mes (MenuGastos.calcularGastado) y lo pasa a estos metodos.
  */
-public class Presupuesto implements IValidable, IConsultable, Serializable {
+public class Presupuesto implements IConsultable {
 
-    private int mes;
-    private int anio;
-    private double montoPresupuestado;
-    private CategoriaGasto categoria;
-    private Empleado empleado;
-
-    public Presupuesto() {
-        this.mes = 1;
-        this.anio = 2026;
-        this.montoPresupuestado = 0;
-        this.categoria = null;
-        this.empleado = null;
-    }
-
-    public void registrar() {
-        this.mes = Consola.leerEntero("Mes (1-12):", 1, 12);
-        this.anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
-        this.montoPresupuestado = Consola.leerMonto("Monto maximo a gastar en el mes (S/):");
-    }
-
-    public int getMes() { return mes; }
-    public int getAnio() { return anio; }
-    public double getMontoPresupuestado() { return montoPresupuestado; }
-    public CategoriaGasto getCategoria() { return categoria; }
-    public Empleado getEmpleado() { return empleado; }
-
-    public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
-    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
-
-    public void setMes(int mes) {
-        if (mes >= 1 && mes <= 12) {
-            this.mes = mes;
-        }
-    }
-
-    public void setAnio(int anio) {
-        if (anio >= 2000 && anio <= 2100) {
-            this.anio = anio;
-        }
-    }
-
-    public void setMontoPresupuestado(double montoPresupuestado) {
-        if (montoPresupuestado > 0) {
-            this.montoPresupuestado = Dinero.redondear(montoPresupuestado);
-        }
-    }
-
-    /** A partir de este porcentaje de uso se avisa al usuario (80%). */
+    // Desde este porcentaje de uso se muestra una ALERTA
     public static final double PORCENTAJE_ALERTA = 80;
 
-    /** Lo que aun se puede gastar. Si es negativo, el presupuesto se excedio. */
+    private int idPresupuesto;
+    private Empleado empleado;
+    private CategoriaGasto categoria;
+    private int mes;
+    private int anio;
+    private double montoLimite;
+
+    // El empleado y la categoria se eligen antes en el menu (setters).
+    // Lo llama: MenuGastos.registrarPresupuesto()
+    public void registrar() {
+        mes = Consola.leerEntero("Mes (1-12):", 1, 12);
+        anio = Consola.leerEntero("Anio (2000-2100):", 2000, 2100);
+        montoLimite = Consola.leerMonto("Monto maximo a gastar en el mes (S/):");
+    }
+
+    // Lo que aun se puede gastar. Si es negativo, se excedio.
     public double calcularDisponible(double gastado) {
-        return Dinero.redondear(montoPresupuestado - gastado);
+        return Dinero.redondear(montoLimite - gastado);
     }
 
     public double calcularPorcentajeUsado(double gastado) {
-        return gastado * 100 / montoPresupuestado;
+        return gastado * 100 / montoLimite;
     }
 
-    /** Estado del presupuesto segun lo gastado en el mes. */
+    // OK (menos de 80%), ALERTA (80% o mas) o EXCEDIDO (se paso del limite)
     public String calcularEstado(double gastado) {
-        if (gastado > montoPresupuestado) {
+        if (gastado > montoLimite) {
             return "EXCEDIDO";
         }
         if (calcularPorcentajeUsado(gastado) >= PORCENTAJE_ALERTA) {
@@ -86,21 +56,27 @@ public class Presupuesto implements IValidable, IConsultable, Serializable {
     }
 
     @Override
-    public boolean validar() {
-        return montoPresupuestado > 0 && mes >= 1 && mes <= 12
-                && categoria != null && empleado != null;
-    }
-
-    @Override
     public String resumen() {
-        String nombreCategoria = (categoria != null) ? categoria.getNombreCategoria() : "Sin categoria";
-        String nombreEmpleado = (empleado != null) ? empleado.getNombreCompleto() : "Sin empleado";
-        return getPeriodo() + " | " + nombreCategoria + " | " + nombreEmpleado
-                + " | Limite: " + Dinero.formatear(montoPresupuestado);
+        return getPeriodo() + " | " + categoria.getNombre() + " | " + empleado.getNombreCompleto()
+                + " | Limite: " + Dinero.formatear(montoLimite);
     }
 
     @Override
     public String toString() {
         return resumen();
     }
+
+    public int getIdPresupuesto() { return idPresupuesto; }
+    public Empleado getEmpleado() { return empleado; }
+    public CategoriaGasto getCategoria() { return categoria; }
+    public int getMes() { return mes; }
+    public int getAnio() { return anio; }
+    public double getMontoLimite() { return montoLimite; }
+
+    public void setIdPresupuesto(int idPresupuesto) { this.idPresupuesto = idPresupuesto; }
+    public void setEmpleado(Empleado empleado) { this.empleado = empleado; }
+    public void setCategoria(CategoriaGasto categoria) { this.categoria = categoria; }
+    public void setMes(int mes) { this.mes = mes; }
+    public void setAnio(int anio) { this.anio = anio; }
+    public void setMontoLimite(double montoLimite) { this.montoLimite = montoLimite; }
 }

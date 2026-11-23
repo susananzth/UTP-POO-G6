@@ -1,18 +1,16 @@
 package walletpro.interfaces;
 
-import walletpro.excepciones.OperacionInvalidaException;
+import walletpro.modelo.Movimiento;
 
 /**
- * Contrato para las clases que mueven dinero (hoy, CuentaBancaria).
- * Toda entrada o salida de dinero debe pasar por depositar() o
- * retirar(), que dejan registro en el historial: no existe otra forma
- * de cambiar un saldo "por debajo".
+ * INTERFAZ para lo que mueve dinero. La implementa: CuentaBancaria.
+ * Cada operacion devuelve el Movimiento que se genero, para guardarlo
+ * despues en la base de datos con CuentaDAO.guardarMovimiento().
  */
 public interface OperacionFinanciera {
 
-    void depositar(double monto, String descripcion) throws OperacionInvalidaException;
+    Movimiento depositar(double monto, String descripcion);
 
-    void retirar(double monto, String descripcion) throws OperacionInvalidaException;
-
-    boolean validarMonto(double monto);
+    // Devuelve null si no hay saldo suficiente.
+    Movimiento retirar(double monto, String descripcion);
 }
