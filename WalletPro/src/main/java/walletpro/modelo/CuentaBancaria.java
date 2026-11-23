@@ -30,6 +30,9 @@ public class CuentaBancaria implements OperacionFinanciera, IConsultable {
     public void registrar() {
         do {
             numeroCuenta = Consola.leerTexto("Numero de cuenta (6 a 20 digitos):");
+            if (!Validacion.esNumeroCuentaValido(numeroCuenta)) {
+                System.out.println("Debe tener solo digitos, entre 6 y 20.");
+            }
         } while (!Validacion.esNumeroCuentaValido(numeroCuenta));
 
         String mensaje = "Tipo de cuenta:";
